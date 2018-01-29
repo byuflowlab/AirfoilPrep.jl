@@ -9,18 +9,9 @@ using PyCall
 using PyPlot
 using QuadGK
 
-
-# ------------ GLOBAL VARIABLES ------------------------------------------------
-modulepath,_ = splitdir(@__FILE__)
-data_path = modulepath*"../data/"
-
-# ------------ OTHER MODULES ------------------------------------------------
-push!(LOAD_PATH, joinpath(modulepath,"jlxlight/julia/"))
-using Xfoil
-
 # Wrap airfoilprep.py
 @pyimport imp
-(file, filename, data) = imp.find_module("airfoilprep", [modulepath])
+(file, filename, data) = imp.find_module("airfoilprep", ["../../AirfoilPreppy/src/"])
 prepy = imp.load_module("airfoilprep", file, filename, data)
 
 include("airfoilprep_misc.jl")
