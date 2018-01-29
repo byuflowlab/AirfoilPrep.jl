@@ -1,6 +1,6 @@
 # AirfoilPrep.jl
 
-Julia interface to SNOPT (must obtain a licensed copy of SNOPT separately).
+Collection of airfoil pre-processing routines for creating splined airfoil data over AOA, RE, Mach.  Specify airfoil geometry and operating conditions (including rotor parameters if a rotor) and receive a 3D table of airfoil lift and drag data.  Includes calls to Xfoil, AirfoilPreppy, and the interpolations packages.  
 
 ### To Install
 
