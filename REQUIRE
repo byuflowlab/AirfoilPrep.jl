@@ -5,6 +5,7 @@ Roots
 PyCall
 PyPlot
 QuadGK
+JLD
 
 Xfoil #(https://github.com/byuflowlab/Xfoil.jl.git)
 AirfoilPrepy #(https://github.com/byuflowlab/AirfoilPreppy.git)

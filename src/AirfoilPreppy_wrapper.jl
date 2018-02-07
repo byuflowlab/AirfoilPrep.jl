@@ -11,7 +11,7 @@ using QuadGK
 (file, filename, data) = imp.find_module("airfoilprep", ["../../AirfoilPreppy/src/"])
 prepy = imp.load_module("airfoilprep", file, filename, data)
 
-include("airfoilprep_misc.jl")
+include("AirfoilPreppy_Wrapper_misc.jl")
 
 
 
