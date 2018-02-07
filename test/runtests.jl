@@ -98,6 +98,14 @@ function test_extrapolation(; alphas=[i for i in -10:1.0:20], iter=100,
   return extrap_polar
 end
 
+# airfoil="./data/R1_smoothed.dat"
+# # airfoil="$fileloc/data/NACA0006.dat"
+# Re_array = round.(Int,(linspace(1e3,3e6,2)))
+# M_array = (linspace(.1,.9,2))
+# alphas = (linspace(-10,20,60))
+# spline_3D = AirfoilSpline3D.gen3Dspl(airfoil,Re_array,M_array;alphas = alphas,
+#   TSR=0.7,r_over_R=0.4,c_over_r=0.1, verify=true, returntable=false)
+
 verify_correction3D_2()
 test_extrapolation()
 
