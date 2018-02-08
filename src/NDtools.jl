@@ -35,37 +35,78 @@ type SplineND
 
 end
 
+function genMapInput(var_input)
+    # Set up map input based on variable inputs
+    map_in = Array{Array{Float64,length(var_input)},1}(length(var_input))
+    # Iterate through each variable to get N matrices for the map function combinations
+    for i = 1:length(var_input)
+      # Check if var_inputs are linear
+      if (var_input[i][1]-var_input[i][2]) != (var_input[i][2]-var_input[i][3])
+          error("Variable inputs MUST be linear for gridded interpolation")
+      end
+      # Create array that specifies dimensions to reshape function
+      tmp = ones(Int64,length(var_input))
+      tmp[i] = length(var_input[i])
+      # println(tmp)
+
+      # Put values into an array of the correct N
+      tmp2 = reshape(var_input[i],tmp...)
+
+      # Create array that specifies dimensions to repeat function
+      tmp3 = ones(Int64,length(var_input))
+      for j = 1:length(var_input)
+          if i != j
+              tmp3[j] = length(var_input[j])
+          end
+      end
+
+      # Repeat the values into the full array and add to the map input tuple
+      map_in[i] = repeat(tmp2,outer = tmp3)
+    end
+    return map_in
+end
+
+"""
+  `genNDarray(f,response_names,var_input,var_names;
+      savefile=false,tablename="tableND")`
+generates ND array of responses for M outputs and N inputs with
+    a call to an external function (like xfoil).  See example for how
+    to correctly wrap a function
+
+    Parameters
+    ----------
+    response_names: array string
+        names of the output values
+    var_input: tuple array(floats)
+        input values that airfoil will be run at
+    var_names: array string
+        names of the input variables
+    savefile: bool
+        save JLD file
+    tablename: string
+        name of JLD file and TableND data
+
+    Returns
+    -------
+    tableND : TableND
+        a new TableND object
+
+    Notes
+    -----
+    input variables MUST be linearly spaced and accessing the spline outside of
+    the defined variable inputs could return undefined behavior
+
+"""
+
 function genNDarray(f,response_names,var_input,var_names;
     savefile=false,tablename="tableND")
 
     # var_input = (aoa,Re,M,tc)
 
-    # Set up map input based on variable inputs
-    map_in = Array{Array{Float64,length(var_input)},1}(length(var_input))
-
     # Iterate through each variable to get N matrices for the map function combinations
-    for i = 1:length(var_input)
-        # Create array that specifies dimensions to reshape function
-        tmp = ones(Int64,length(var_input))
-        tmp[i] = length(var_input[i])
-        # println(tmp)
+    map_in = genMapInput(var_input)
 
-        # Put values into an array of the correct N
-        tmp2 = reshape(var_input[i],tmp...)
-
-        # Create array that specifies dimensions to repeat function
-        tmp3 = ones(Int64,length(var_input))
-        for j = 1:length(var_input)
-            if i != j
-                tmp3[j] = length(var_input[j])
-            end
-        end
-
-        # Repeat the values into the full array and add to the map input tuple
-        map_in[i] = repeat(tmp2,outer = tmp3)
-    end
-
-    response_values = map(f,map_in...)
+    response_values = map(f,map_in...) #TODO: Replace with pmap for parallelization
 
     tableND = TableND(response_values,response_names,var_input,var_names)
 
@@ -101,6 +142,7 @@ function SplineND_from_tableND(tableND)
   return splND
 end
 
+"""helper function for accessing ND spline"""
 function interpND(splND,vars)
 
     var_nums = zeros(length(splND.var_names))
