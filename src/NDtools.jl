@@ -41,8 +41,9 @@ function genMapInput(var_input)
     # Iterate through each variable to get N matrices for the map function combinations
     for i = 1:length(var_input)
       # Check if var_inputs are linear
-      if (var_input[i][1]-var_input[i][2]) != (var_input[i][2]-var_input[i][3])
-          error("Variable inputs MUST be linear for gridded interpolation")
+      if !isapprox((var_input[i][1]-var_input[i][2]), (var_input[i][2]-var_input[i][3]))
+          error("Variable inputs MUST be linear for gridded interpolation
+          $(var_input[i][1]-var_input[i][2]) != $(var_input[i][2]-var_input[i][3])")
       end
       # Create array that specifies dimensions to reshape function
       tmp = ones(Int64,length(var_input))
@@ -167,36 +168,3 @@ function plotNDtable(tableND)
 
 
 end
-
-
-
-#TEST CODE
-
-
-function xfoil(airfoil,argsxfoil,aoa,Re,M)
-    cl = aoa+Re+M
-    return cl,cl/100,cl/10
-end
-
-aoa = collect(linspace(1,3,3))#linspace(-10,10,20)
-Re = collect(linspace(1,3,3))#linspace(1000,1E8,20)
-M = collect(linspace(1,3,4))#linspace(.001,1,20)
-tc = collect(linspace(1,3,3))#linspace(.001,1,20)
-
-airfoil = "test"
-argsxfoil = (true)
-function f(aoa,Re,M)
-    return xfoil(airfoil,argsxfoil,aoa,Re,M)
-end
-
-
-var_input = (aoa,Re,M)
-var_names = ["aoa","Re","M"]
-response_names = ["cl","cd","cm"]
-tableout = genNDarray(f,response_names,var_input,var_names;
-    savefile=false,tablename="tableND")
-# response = [tup[1] for tup in tableout.response_values]
-splout = SplineND_from_tableND(tableout)
-
-vars = (1,2,1)
-outputWORKS = interpND(splout[1],vars)
