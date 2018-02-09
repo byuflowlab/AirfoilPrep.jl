@@ -109,7 +109,14 @@ function genNDarray(f,response_names,var_input,var_names;
 
     response_values = map(f,map_in...) #TODO: Replace with pmap for parallelization
 
-    tableND = TableND(response_values,response_names,var_input,var_names)
+    # Reshape to be a float of floats(size(variable_inputs)) instead of floats(size(variable_inputs)) of tuples
+    response_values2 = Array{Array{Float64,length(var_input)},1}(length(var_input))
+    for i = 1:length(response_names)
+    # i = 1
+        response_values2[i] = [tup[i] for tup in response_values]
+    end
+
+    tableND = TableND(response_values2,response_names,var_input,var_names)
 
     if savefile
         JLD.save("$tablename.txt",tablename,tableND)
@@ -123,8 +130,7 @@ function SplineND_from_tableND(tableND)
   #create the 3D splines
   splND = []
   for i = 1:length(tableND.response_names)
-      response = [tup[1] for tup in tableND.response_values]
-      println(response)
+      response = tableND.response_values[i]
 
       spl_response = interpolate(response, BSpline(Cubic(Line())), OnCell())
 

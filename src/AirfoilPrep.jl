@@ -17,9 +17,9 @@ function f3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,indices)
     alpha = NDtable.var_input[1] #AOA assumed to be in first variable
 
 
-    cl = [tup[1] for tup in NDtable.response_values[:,indices...]] #Assumed to be first response
-    cd = [tup[2] for tup in NDtable.response_values[:,indices...]] #Assumed to be second response
-    cm = [tup[3] for tup in NDtable.response_values[:,indices...]] #Assumed to be 3rd response
+    cl = NDtable.response_values[1][:,indices...] #Assumed to be first response
+    cd = NDtable.response_values[2][:,indices...] #Assumed to be second response
+    cm = NDtable.response_values[3][:,indices...] #Assumed to be 3rd response
 
     polar = Polar(Re, alpha, cl, cd, cm, coord[:,1], coord[:,2])
     # 3D corrected Polar
@@ -72,21 +72,26 @@ function NDTable_correction3D_extrap(NDtable,r_over_R,c_over_r,TSR)
     cd = [tup[2] for tup in response_values]
     cm = [tup[3] for tup in response_values]
 
-    cl2 = zeros(length(grid_alphas),size(NDtable.response_values)[2:end]...)
+    cl2 = zeros(length(grid_alphas),size(NDtable.response_values[1])[2:end]...)
     cd2 = zeros(cl2)
     cm2 = zeros(cl2)
+    response_values_extrap = []
     for i = 1:length(grid_alphas)
         cl2[i,:] = [aoa[i] for aoa in cl]
         cd2[i,:] = [aoa[i] for aoa in cd]
         cm2[i,:] = [aoa[i] for aoa in cm]
     end
 
+    # Reshape to be a float of floats(size(variable_inputs))
+    response_values2 = Array{Array{Float64,length(NDtable.var_input)},1}(length(NDtable.var_input))
+    response_values2[1] = cl2
+    response_values2[2] = cd2
+    response_values2[3] = cm2
 
+    #update the variable input for the extrapolated aoa
     var_input = (grid_alphas,NDtable.var_input[2:end]...)
-    response_values = (cl2,cd2,cm2)
 
-    return TableND(response_values,NDtable.response_names,var_input,NDtable.var_names)
-
+    return TableND(response_values2,NDtable.response_names,var_input,NDtable.var_names)
 end #NDTable_correction3D_extrap
 
 
@@ -99,8 +104,8 @@ function xfoil(airfoil,argsxfoil,aoa,Re,M)
 end
 
 aoa = collect(linspace(1,3,30))#linspace(-10,10,20)
-Re = collect(linspace(1,3,30))#linspace(1000,1E8,20)
-M = collect(linspace(1,3,40))#linspace(.001,1,20)
+Re = collect(linspace(1,3,5))#linspace(1000,1E8,20)
+M = collect(linspace(1,3,5))#linspace(.001,1,20)
 tc = collect(linspace(1,3,3))#linspace(.001,1,20)
 
 airfoil = "test"
@@ -115,7 +120,8 @@ var_names = ["aoa","Re","M"]
 response_names = ["cl","cd","cm"]
 NDtable = genNDarray(f,response_names,var_input,var_names;
     savefile=false,tablename="tableND")
-
+indices = (1,1,2)
+cl = NDtable.response_values[1][indices...] #Assumed to be first response
 r_over_R = 0.3
 c_over_r = 0.2
 TSR = 5.0
@@ -125,17 +131,13 @@ grid_alphas=[i for i in -180:1.0:180]
 
 coord = zeros(10,2) #TODO? airfoil not included here
 
-var_indices = (1,2)# Array{Array{Int64,length(var_input)},1}(length(var_input))
+NDextrap3D_3Dtable = NDTable_correction3D_extrap(NDtable,r_over_R,c_over_r,TSR)
+#
+splout_extrap = SplineND_from_tableND(NDextrap3D_3Dtable)
+splout_non_extrap = SplineND_from_tableND(NDtable)
 
-extrap3D_3Dtable = NDTable_correction3D_extrap(NDtable,r_over_R,c_over_r,TSR)
-#
-# splout = SplineND_from_tableND(tableout)
-#
-# vars = (1,2,1)
-# outputWORKS = interpND(splout[1],vars)
-#
-# indices = (1,1)
-#
-# test = tableout.response_values[1,indices...]
-#
-# # end # module
+vars = (1,2,1)
+outputWORKS = interpND(splout_extrap[1],vars)
+
+
+# end # module
