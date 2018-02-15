@@ -1,4 +1,4 @@
-# module AirfoilPrep
+module AirfoilPrep
 
 
 
@@ -94,50 +94,4 @@ function NDTable_correction3D_extrap(NDtable,r_over_R,c_over_r,TSR)
     return TableND(response_values2,NDtable.response_names,var_input,NDtable.var_names)
 end #NDTable_correction3D_extrap
 
-
-#TEST CODE
-
-
-function xfoil(airfoil,argsxfoil,aoa,Re,M)
-    cl = aoa+Re+M
-    return cl,cl/100,cl/10
-end
-
-aoa = collect(linspace(1,3,30))#linspace(-10,10,20)
-Re = collect(linspace(1,3,5))#linspace(1000,1E8,20)
-M = collect(linspace(1,3,5))#linspace(.001,1,20)
-tc = collect(linspace(1,3,3))#linspace(.001,1,20)
-
-airfoil = "test"
-argsxfoil = (true)
-function f(aoa,Re,M)
-    return xfoil(airfoil,argsxfoil,aoa,Re,M)
-end
-
-
-var_input = (aoa,Re,M)
-var_names = ["aoa","Re","M"]
-response_names = ["cl","cd","cm"]
-NDtable = genNDarray(f,response_names,var_input,var_names;
-    savefile=false,tablename="tableND")
-indices = (1,1,2)
-cl = NDtable.response_values[1][indices...] #Assumed to be first response
-r_over_R = 0.3
-c_over_r = 0.2
-TSR = 5.0
-
-
-grid_alphas=[i for i in -180:1.0:180]
-
-coord = zeros(10,2) #TODO? airfoil not included here
-
-NDextrap3D_3Dtable = NDTable_correction3D_extrap(NDtable,r_over_R,c_over_r,TSR)
-#
-splout_extrap = SplineND_from_tableND(NDextrap3D_3Dtable)
-splout_non_extrap = SplineND_from_tableND(NDtable)
-
-vars = (1,2,1)
-outputWORKS = interpND(splout_extrap[1],vars)
-
-
-# end # module
+end # module
