@@ -99,51 +99,49 @@ function test_extrapolation(; alphas=[i for i in -10:1.0:20], iter=100,
     return extrap_polar
 end
 
-# airfoil="./data/R1_smoothed.dat"
-# # airfoil="$fileloc/data/NACA0006.dat"
-# Re_array = round.(Int,(linspace(1e3,3e6,2)))
-# M_array = (linspace(.1,.9,2))
-# alphas = (linspace(-10,20,60))
-# spline_3D = AirfoilSpline3D.gen3Dspl(airfoil,Re_array,M_array;alphas = alphas,
-#   TSR=0.7,r_over_R=0.4,c_over_r=0.1, verify=true, returntable=false)
 
 #-------- TEST NDtools --------#
 
+#Use S809 NREL airfoil:
+#1) Verify Cl, Cd, Cm
+#2) Verify 3d correction
+#3) Verify extrapolation
+
+#--- Load in Airfoiltools.com S809 Data ---#
+S809_Re2E5 = CSV.read(modulepath*data_path*"xf-s809-nr-200000.csv";
+header=["alpha" ,"CL","CD","CDp","CM","Top_Xtr","Bot_Xtr"],delim = ",", datarow=13)
+
+S809_Re5E5 = CSV.read(modulepath*data_path*"xf-s809-nr-500000.csv";
+header=["alpha" ,"CL","CD","CDp","CM","Top_Xtr","Bot_Xtr"],delim = ",", datarow=13)
+
+S809_Re1E6 = CSV.read(modulepath*data_path*"xf-s809-nr-1000000.csv";
+header=["alpha" ,"CL","CD","CDp","CM","Top_Xtr","Bot_Xtr"],delim = ",", datarow=13)
+
+AirfoilToolsData = (S809_Re2E5,S809_Re5E5,S809_Re1E6)
+
 folder,_ = splitdir(@__FILE__)
-airfoil_file = joinpath(folder,"data","naca0006.dat")
+airfoil_file = joinpath(folder,"data","S809.txt")
+headerlines = 2
 open(airfoil_file,"r") do f
     global  x = Array{Float64,1}(0)
     global  y = Array{Float64,1}(0)
-    for line in eachline(f)
-        x = append!(x,parse(split(chomp(line))[1]))
-        y = append!(y,parse(split(chomp(line))[2]))
+    for (i,line) in enumerate(eachline(f))
+        if i>headerlines
+            x = append!(x,parse(split(chomp(line))[1]))
+            y = append!(y,parse(split(chomp(line))[2]))
+        else
+        end
     end
 end
 
-aoas = collect(linspace(-2,5,5))#linspace(-10,10,20)
-Res = collect(linspace(1e4,1e6,4))#linspace(1000,1E8,20)
-Ms = collect(linspace(0.001,0.1,3))#linspace(.001,1,20)
+aoas = collect(linspace(-15,25,41))#linspace(-10,10,20)
+Res = [2E5,3E5,4E5,5E5,6E5,7E5,8E5,9E5,1E6]
+Ms = [0.0,0.01]
 
 #Wapper function for my analysis code: happens to be Xfoil
 function f(Re,M)
     cls,cds,cdps,cms,convs =Xfoil.xfoilsweep(x,y,aoas,Re;iter=100,npan=140,mach=M,
     percussive_maintenance=true,printdata=true,zeroinit=true,clmaxstop=true,clminstop=true)
-
-
-    nonconv_iter = 0.0
-    for i = 1:length(convs)
-        if convs[i]==false
-            # cls[i] = 0.0
-            # cds[i] = 0.0
-            # cdps[i] = 0.0
-            # cms[i] = 0.0
-            nonconv_iter += 1.0
-        end
-    end
-
-    if nonconv_iter>length(aoas)*2/3
-        warn("more than 2/3 of the airfoil data did not converge")
-    end
 
     return cls,cds+cdps,cms,convs
 end
@@ -180,14 +178,49 @@ response_values2 = [cls,cds,cms,convs]
 NDtable = AirfoilPrep.TableND(response_values2,response_names,var_input,var_names)
 
 #Access the table example
-indices = (1,1,2)
-cl = NDtable.response_values[1][indices...] #Assumed cl to be first response
+myindices = (1,1,1)
+cl = NDtable.response_values[1][myindices...] #Assumed cl to be first response
+
+# Spline the table
+#Warning, the airfoil data here has non-converged points
+splout_non_extrap = AirfoilPrep.SplineND_from_tableND(NDtable)
+test_cl = AirfoilPrep.interpND(splout_non_extrap[1],(0.0,2E5,0.0))
+#Plot the results
+Re_airfoiltools = [2E5,5E5,1E6]
+XfoilData_cl = zeros(length(aoas),length(Re_airfoiltools))
+vars = []
+for i = 1:length(Re_airfoiltools) #length of the airfoiltools data #TODO TODO TODO
+    for j = 1:length(aoas)
+        vars = (aoas[j],Re_airfoiltools[i],0.0)
+        XfoilData_cl[j,i] = AirfoilPrep.interpND(splout_non_extrap[1],vars)
+    end
+end
+
+#Plot the AirfoilTools Data vs the newly generated data
+rc("figure", figsize=(4.5, 2.6))
+rc("font", size=10.0)
+rc("lines", linewidth=1.5)
+rc("lines", markersize=3.0)
+rc("legend", frameon=false)
+rc("axes.spines", right=false, top=false)
+rc("figure.subplot", left=0.18, bottom=0.18, top=0.97, right=0.92)
+rc("axes", color_cycle=["348ABD", "A60628", "009E73", "7A68A6", "D55E00", "CC79A7"])
+color_cycle=["#348ABD", "#A60628", "#009E73", "#7A68A6", "#D55E00", "#CC79A7", "#000486","#700000","#006907","#4C0099"]
+
+PyPlot.close("all")
+PyPlot.figure("Verify_NDspline")
+for i = 1:length(Re_airfoiltools)
+    PyPlot.plot(aoas,XfoilData_cl[:,i],".-",color = color_cycle[i],label = "NDtools Re $(round(Int,Re_airfoiltools[i]))")
+    PyPlot.plot(AirfoilToolsData[i][:,1],AirfoilToolsData[i][:,2],"--",color = color_cycle[i],label = "Aifoiltools.com Re $(round(Int,Re_airfoiltools[i]))")
+end
+PyPlot.xlabel("AOA")
+PyPlot.ylabel("cl")
+PyPlot.legend(loc = "best")
 
 # Test airfoilpreppy on the ND table
 r_over_R = 0.1
 c_over_r = 0.3
 TSR = 10.0
-
 
 grid_alphas=[i for i in -180:1.0:180]
 
@@ -198,7 +231,7 @@ NDextrap3D_3Dtable = AirfoilPrep.NDTable_correction3D_extrap(NDtable,r_over_R,c_
 splout_extrap = AirfoilPrep.SplineND_from_tableND(NDextrap3D_3Dtable)
 splout_non_extrap = AirfoilPrep.SplineND_from_tableND(NDtable)
 
-vars = (0,1e5,0.01)
+vars = (0,1e6,0.01)
 outputWORKS = AirfoilPrep.interpND(splout_extrap[1],vars)
 outputWORKS2 = AirfoilPrep.interpND(splout_non_extrap[1],vars)
 #

@@ -41,10 +41,14 @@ function genMapInput(var_input)
     # Iterate through each variable to get N matrices for the map function combinations
     for i = 1:length(var_input)
       # Check if var_inputs are linear
-      if !isapprox((var_input[i][1]-var_input[i][2]), (var_input[i][2]-var_input[i][3]))
-          error("Variable inputs MUST be linear for gridded interpolation
-          $(var_input[i][1]-var_input[i][2]) != $(var_input[i][2]-var_input[i][3])")
+
+      if (length(var_input[i])>2) #Catch single variable inputs before accessing them
+          if (!isapprox((var_input[i][1]-var_input[i][2]), (var_input[i][2]-var_input[i][3])))
+              error("Variable inputs MUST be linear for gridded interpolation
+              $(var_input[i][1]-var_input[i][2]) != $(var_input[i][2]-var_input[i][3])")
+          end
       end
+
       # Create array that specifies dimensions to reshape function
       tmp = ones(Int64,length(var_input))
       tmp[i] = length(var_input[i])

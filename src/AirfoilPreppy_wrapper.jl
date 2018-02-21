@@ -131,7 +131,7 @@ function correction3D(self::Polar, r_over_R::Float64, chord_over_r::Float64,
 end
 
 """
-  `extrapolate(self::Polar, cdmax::Float64; AR=nothing, cdmin=0.001,
+  `APextrapolate(self::Polar, cdmax::Float64; AR=nothing, cdmin=0.001,
                     nalpha=15)`
 Extrapolates force coefficients up to +/- 180 degrees using Viterna's method
 :cite:`Viterna1982Theoretical-and`.
@@ -164,7 +164,7 @@ Extrapolates force coefficients up to +/- 180 degrees using Viterna's method
   cdmax = 1.11 + 0.018*AR
 
 """
-function extrapolate(self::Polar, cdmax::Float64; AR=nothing, cdmin=0.001,
+function APextrapolate(self::Polar, cdmax::Float64; AR=nothing, cdmin=0.001,
                       nalpha=15)
   new_pyPolar = self.pyPolar[:extrapolate](cdmax, AR=AR, cdmin=cdmin,
                                             nalpha=nalpha)

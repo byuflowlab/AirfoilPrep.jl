@@ -3,50 +3,61 @@ module AirfoilPrep
 
 
 # ------------ GENERIC MODULES -------------------------------------------------
-
+using Dierckx
 #-------------Sub Routines --------------------------------------------
 include("AirfoilPreppy_Wrapper.jl")
 include("NDtools.jl")
 
-function afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,indices)
-    # indices for airfoil data should be Re, Mach, then whatever
-    indices = round.(Int,indices)
-    idx_Re = indices[1]
+function afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,var_indices)
+    # var_indices for airfoil data should be Re, Mach, then whatever
+    var_indices = round.(Int,var_indices)
+    idx_Re = var_indices[1]
     #TODO: match input variable names to correct index instead of assuming
     Re = round(Int,NDtable.var_input[2][idx_Re]) #Re assumed to be second variable
     alpha = NDtable.var_input[1] #AOA assumed to be in first variable
 
 
-    cl = NDtable.response_values[1][:,indices...] #Assumed to be first response
-    cd = NDtable.response_values[2][:,indices...] #Assumed to be second response
-    cm = NDtable.response_values[3][:,indices...] #Assumed to be 3rd response
-    conv = NDtable.response_values[4][:,indices...] #Assumed to be 3rd response
+    cl = NDtable.response_values[1][:,var_indices...] #Assumed to be first response
+    cd = NDtable.response_values[2][:,var_indices...] #Assumed to be second response
+    cm = NDtable.response_values[3][:,var_indices...] #Assumed to be 3rd response
+    conv = NDtable.response_values[4][:,var_indices...] #Assumed to be 3rd response
 
     cl2 = []
     cd2 = []
     cm2 = []
+    alpha2 = []
 
     # build good data
+    i2 = 1
     for i = 1:length(cl)
         if conv[i]==true
             push!(cl2,cl[i])
-            #TODO: TODO: TODO: HERE
+            push!(cd2,cd[i])
+            push!(cm2,cm[i])
+            push!(alpha2,alpha[i])
+            i2 += 1
         end
     end
+
+    # Warn if the number of converged points is less than half
+    if i2<(length(cl)/2)
+        warn("Number of converged solutions is $(i2/length(cl))")
+    end
+
 
     #TODO: Use xfoil finding of min and max linear?
     #TODO: include logic to filter out bad data, or non-converged solutions,
 
-    polar = Polar(Re, alpha, cl, cd, cm, coord[:,1], coord[:,2])
+    polar = Polar(Re, alpha2, cl2, cd2, cm2, coord[:,1], coord[:,2])
     # 3D corrected Polar
     #especially too high or low aoa for the conditions, possibly pop out data, then spline and resample?
     AoAclmax = 5.0
     AoAclmin = -2.0
     CDmax = 1.3
     newpolar = correction3D(polar, r_over_R, c_over_r, TSR,
-    alpha_linear_min=AoAclmin, alpha_linear_max=AoAclmax, alpha_max_corr=5.0)#maximum(alpha))
+    alpha_linear_min=AoAclmin, alpha_linear_max=AoAclmax, alpha_max_corr=maximum(alpha2))
     # Extrapolated polar
-    extrap_polar = extrapolate(newpolar, CDmax;nalpha = 40)
+    extrap_polar = APextrapolate(newpolar, CDmax;nalpha = 40)
 
     cl = extrap_polar.init_cl
     cd = extrap_polar.init_cd
@@ -75,8 +86,8 @@ function NDTable_correction3D_extrap(NDtable,r_over_R,c_over_r,TSR;grid_alphas=[
 
     coord = zeros(10,2) #TODO? airfoil not included here
 
-    function afpreppy_wrap2(indices...)
-        cl,cd,cm = afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,indices)
+    function afpreppy_wrap2(var_indices...)
+        cl,cd,cm = afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,var_indices)
         return (cl,cd,cm)
     end
 
