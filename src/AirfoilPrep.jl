@@ -56,6 +56,7 @@ function afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,var_indi
     CDmax = 1.3
     newpolar = correction3D(polar, r_over_R, c_over_r, TSR,
     alpha_linear_min=AoAclmin, alpha_linear_max=AoAclmax, alpha_max_corr=maximum(alpha2))
+    println(AP.get_cl(newpolar)[2]) #TODO TODO TODO
     # Extrapolated polar
     extrap_polar = APextrapolate(newpolar, CDmax;nalpha = 40)
 
