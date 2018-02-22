@@ -38,7 +38,7 @@ function afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,var_indi
             i2 += 1
         end
     end
-
+    println(cl2)
     # Warn if the number of converged points is less than half
     if i2<(length(cl)/2)
         warn("Number of converged solutions is $(i2/length(cl))")
