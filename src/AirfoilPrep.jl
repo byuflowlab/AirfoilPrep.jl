@@ -77,8 +77,8 @@ function afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,var_indi
             j+=1 #update index for deleting in array
         end
     end
-PyPlot.figure()
-PyPlot.plot(alpha_extrap,cl)
+# PyPlot.figure()
+# PyPlot.plot(alpha_extrap,cl)
 
     clspl = Dierckx.Spline1D(alpha_extrap,cl,bc="nearest") # Evaluate at alphas that were specified to keep the 3D gridded spline consistent
     clgrid_alphas = clspl(grid_alphas)
