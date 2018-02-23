@@ -1,5 +1,5 @@
-# using AirfoilPrep
-include("/Users/kmoore/.julia/v0.6/AirfoilPrep/src/AirfoilPrep.jl")
+using AirfoilPrep
+# include("/Users/kmoore/.julia/v0.6/AirfoilPrep/src/AirfoilPrep.jl")
 using Base.Test
 using Xfoil
 
@@ -130,7 +130,7 @@ end
 # #2) Verify 3d correction
 # #3) Verify extrapolation
 # """
-function TestNDtools_from_Xfoil_to_Extrapolation()
+function ValidateNDtools_from_Xfoil()
 
     #--- Load in Airfoiltools.com S809 Data ---#
     S809_Re2E5 = CSV.read(modulepath*data_path*"xf-s809-nr-200000.csv";
@@ -247,16 +247,17 @@ function TestNDtools_from_Xfoil_to_Extrapolation()
     PyPlot.ylabel("cl")
     PyPlot.legend(loc = "best")
 
-    # Test airfoilpreppy on the ND table
-    r_over_R = 0.1
-    c_over_r = 0.3
-    TSR = 10.0
-    grid_alphas=[i for i in -180:1.0:180]
+
 
     return NDTable_error_max,NDtable
 end
 
-NDtable = TestNDtools_from_Xfoil_to_Extrapolation()
+# NDTable_error_max,NDtable = ValidateNDtools_from_Xfoil()
+# Test airfoilpreppy on the ND table
+r_over_R = 0.1
+c_over_r = 0.3
+TSR = 10.0
+grid_alphas=[i for i in -180:1.0:180]
 # function verifyNDtable_extrap(NDtable)
 # Includes convergence checking
 # using Gallium
@@ -268,10 +269,13 @@ splout_extrap = AirfoilPrep.SplineND_from_tableND(NDextrap3D_3Dtable)
 
 
 #Plot the output and get the error
+Re_airfoiltools = [2E5,5E5,1E6]
+aoas = collect(linspace(-15,25,41))#linspace(-10,10,20)
 extrap_aoas = grid_alphas
 extrap_cl =zeros(length(extrap_aoas),length(Re_airfoiltools))
 vars = []
 ND_corr3Dextr_maxerror = 0.0
+#START:Debug output of splined cl 
 for i = 1:length(Re_airfoiltools) #length of the airfoiltools data
     for j = 1:length(aoas)
         vars = (extrap_aoas[j],Re_airfoiltools[i],0.0)

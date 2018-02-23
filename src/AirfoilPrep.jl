@@ -38,7 +38,7 @@ function afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,var_indi
             i2 += 1
         end
     end
-    println(cl2)
+
     # Warn if the number of converged points is less than half
     if i2<(length(cl)/2)
         warn("Number of converged solutions is $(i2/length(cl))")
@@ -56,14 +56,29 @@ function afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,var_indi
     CDmax = 1.3
     newpolar = correction3D(polar, r_over_R, c_over_r, TSR,
     alpha_linear_min=AoAclmin, alpha_linear_max=AoAclmax, alpha_max_corr=maximum(alpha2))
-    println(AP.get_cl(newpolar)[2]) #TODO TODO TODO
+
     # Extrapolated polar
-    extrap_polar = APextrapolate(newpolar, CDmax;nalpha = 40)
+    extrap_polar = APextrapolate(newpolar, CDmax;nalpha = 40,cdmin = minimum(cd2))
 
     cl = extrap_polar.init_cl
     cd = extrap_polar.init_cd
     cm = extrap_polar.init_cm
     alpha_extrap = extrap_polar.init_alpha
+    alpha_extrap2 = copy(extrap_polar.init_alpha)
+
+    #Remove elements if duplicated aoa
+    j=1
+    for i = 2:length(alpha_extrap2)
+        if alpha_extrap2[i]==alpha_extrap2[i-j]
+            deleteat!(alpha_extrap,i-j)
+            deleteat!(cl,i-j)
+            deleteat!(cd,i-j)
+            deleteat!(cm,i-j)
+            j+=1 #update index for deleting in array
+        end
+    end
+PyPlot.figure()
+PyPlot.plot(alpha_extrap,cl)
 
     clspl = Dierckx.Spline1D(alpha_extrap,cl,bc="nearest") # Evaluate at alphas that were specified to keep the 3D gridded spline consistent
     clgrid_alphas = clspl(grid_alphas)

@@ -7,8 +7,9 @@ using PyPlot
 using QuadGK
 
 # Wrap airfoilprep.py
+filepath,_ = splitdir(@__FILE__)
 @pyimport imp
-(file, filename, data) = imp.find_module("airfoilprep", ["../../AirfoilPreppy/src/"])
+(file, filename, data) = imp.find_module("airfoilprep", ["$filepath/../../AirfoilPreppy/src/"])
 prepy = imp.load_module("airfoilprep", file, filename, data)
 
 include("AirfoilPreppy_Wrapper_misc.jl")
