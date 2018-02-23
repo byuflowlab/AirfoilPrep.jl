@@ -1,6 +1,21 @@
 using JLD
 using Interpolations
 
+"""
+  `TableND(response_name,spl_response,m_vars,b_vars,
+  var_input,var_names)`
+
+Defines an arbitrary input arbitrary output ND spline with
+the following properties:
+
+  # Arguments
+  * response_values::ND Array              : Values of response being splined
+  * response_name::String               : Name of the response being splined
+  * var_input::Tuple(Arrays)    : Input variable values for reference
+  * var_names::String     : Names of input variables
+
+NOTE:
+"""
 type TableND
   # Initialization variables (USER INPUT)
 
@@ -17,6 +32,24 @@ type TableND
 
 end
 
+"""
+  `SplineND(response_name,spl_response,m_vars,b_vars,
+  var_input,var_names)`
+
+Defines an arbitrary input arbitrary output ND spline with
+the following properties:
+
+  # Arguments
+  * response_name::String               : Name of the response being splined
+  * spl_response::ND Spline via interpolation     : ND Spline of response
+  * m_vars::Tuple    : Spline access linear function slopes for input variables
+  * b_vars::Tuple    : Spline access linear function offset for input variables
+  * var_input::Tuple(Arrays)    : Input variable values for reference
+  * var_names::String     : Names of input variables
+
+
+NOTE:
+"""
 type SplineND
   # Initialization variables (USER INPUT)
   response_name
@@ -35,6 +68,22 @@ type SplineND
 
 end
 
+
+"""
+  `genMapInput(var_input)`
+
+Defines the arrays needed for the julia map function to run all of the combinations of input variables
+
+  Parameters
+  ----------
+  var_input::Tuple(Arrays)    : Input variable values for reference
+
+  Returns
+  ----------
+  map_in: Array(Arrays)     :Arrays used by the julia map function to run the airfoil/whatever generation function
+
+NOTE:
+"""
 function genMapInput(var_input)
     # Set up map input based on variable inputs
     map_in = Array{Array{Float64,length(var_input)},1}(length(var_input))
@@ -72,8 +121,7 @@ function genMapInput(var_input)
 end
 
 """
-  `genNDarray(f,response_names,var_input,var_names;
-      savefile=false,tablename="tableND")`
+  `genNDarray(f,response_names,var_input,var_names)`
 generates ND array of responses for M outputs and N inputs with
     a call to an external function (like xfoil).  See example for how
     to correctly wrap a function
@@ -86,15 +134,11 @@ generates ND array of responses for M outputs and N inputs with
         input values that airfoil will be run at
     var_names: array string
         names of the input variables
-    savefile: bool
-        save JLD file
-    tablename: string
-        name of JLD file and TableND data
 
     Returns
     -------
-    tableND : TableND
-        a new TableND object
+    response_values : Array(Arrays(Tuples))
+        values from the data function
 
     Notes
     -----
@@ -102,34 +146,30 @@ generates ND array of responses for M outputs and N inputs with
     the defined variable inputs could return undefined behavior
 
 """
-
-function genNDarray(f,response_names,var_input,var_names;
-    savefile=false,tablename="tableND")
-
-    # var_input = (aoa,Re,M,tc)
+function genNDarray(f,response_names,var_input,var_names)
 
     # Iterate through each variable to get N matrices for the map function combinations
     map_in = genMapInput(var_input)
-
     response_values = map(f,map_in...) #TODO: Replace with pmap for parallelization
-
-    # # Reshape to be a float of floats(size(variable_inputs)) instead of floats(size(variable_inputs)) of tuples
-    # response_values2 = Array{Array{Float64,length(var_input)},1}(length(var_input))
-    # for i = 1:length(response_names)
-    # # i = 1
-    #     response_values2[i] = [tup[i] for tup in response_values]
-    # end
-    #
-    # tableND = TableND(response_values2,response_names,var_input,var_names)
-    #
-    # if savefile
-    #     JLD.save("$tablename.txt",tablename,tableND)
-    # end
 
     return response_values#tableND
 end
 
+"""
+  `SplineND_from_tableND(tableND)`
 
+defines the
+
+  Parameters
+  ----------
+  var_input::Tuple(Arrays)    : Input variable values for reference
+
+  Returns
+  ----------
+  map_in: Array(Arrays)     :Arrays used by the julia map function to run the airfoil/whatever generation function
+
+NOTE:
+"""
 function SplineND_from_tableND(tableND)
   #create the 3D splines
   splND = []
@@ -168,6 +208,7 @@ function interpND(splND,vars)
     return response#, g
 end
 
+"""Not ready yet"""
 function plotNDtable(tableND)
     for i = 1:length(tableND.response_names)
         PyPlot.figure("$(tableND.response_names[i])_vs_$(tableND.var_names[1]),$(tableND.var_names[j])")

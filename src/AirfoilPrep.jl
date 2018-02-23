@@ -1,13 +1,15 @@
 module AirfoilPrep
 
-
-
 # ------------ GENERIC MODULES -------------------------------------------------
 using Dierckx
 #-------------Sub Routines --------------------------------------------
 include("AirfoilPreppy_Wrapper.jl")
 include("NDtools.jl")
 
+
+"""Internal: Break up functions calling airfoilpreppy for clarity,
+handles aoa extraction out of the ND array to feed into airfoilpreppy
+then puts it back into the correct ND array format for b-splining"""
 function afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,var_indices)
     # var_indices for airfoil data should be Re, Mach, then whatever
     var_indices = round.(Int,var_indices)
@@ -54,6 +56,7 @@ function afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,var_indi
     AoAclmax = 5.0
     AoAclmin = -2.0
     CDmax = 1.3
+
     newpolar = correction3D(polar, r_over_R, c_over_r, TSR,
     alpha_linear_min=AoAclmin, alpha_linear_max=AoAclmax, alpha_max_corr=maximum(alpha2))
 
@@ -77,8 +80,6 @@ function afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,var_indi
             j+=1 #update index for deleting in array
         end
     end
-# PyPlot.figure()
-# PyPlot.plot(alpha_extrap,cl)
 
     clspl = Dierckx.Spline1D(alpha_extrap,cl,bc="nearest") # Evaluate at alphas that were specified to keep the 3D gridded spline consistent
     clgrid_alphas = clspl(grid_alphas)
@@ -92,6 +93,34 @@ function afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,var_indi
     return clgrid_alphas,cdgrid_alphas,cmgrid_alphas
 end
 
+"""
+    `NDTable_correction3D_extrap(NDtable,r_over_R,c_over_r,TSR;grid_alphas=[i for i in -180:1.0:180])`
+
+runs airfoilprepy for each aoa vs cl,cd,cm,etc contained in a TableND object
+
+        Parameters
+        ----------
+        NDtable: TableND
+            a TableND object
+        r_over_R: Float
+            blade radial position
+        c_over_r: Float
+            chord to radius ratio at radial position
+        TSR: Float
+            tip speed ratio: wind turbine analysis definition
+        grid_alphas: Array
+            linearly space alphas for response value splines
+
+        Returns
+        -------
+        tableND : TableND
+            a new TableND object
+
+        Notes
+        -----
+        does include some robust measures to get rid of duplicate points, non-converged airfoil data
+
+"""
 function NDTable_correction3D_extrap(NDtable,r_over_R,c_over_r,TSR;grid_alphas=[i for i in -180:1.0:180])
     #Create array of indices to correctly access each cl curve
     var_indices = []# Array{Array{Int64,length(var_input)},1}(length(var_input))
@@ -117,7 +146,7 @@ function NDTable_correction3D_extrap(NDtable,r_over_R,c_over_r,TSR;grid_alphas=[
     cd2 = zeros(cl2)
     cm2 = zeros(cl2)
     response_values_extrap = []
-    println(size(cl2))
+
     for i = 1:length(grid_alphas)
         cl2[i,:] = [aoa[i] for aoa in cl]
         cd2[i,:] = [aoa[i] for aoa in cd]

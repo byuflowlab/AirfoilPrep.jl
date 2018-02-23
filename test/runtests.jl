@@ -5,6 +5,8 @@ using Xfoil
 using CSV
 using PyPlot
 
+
+# Specify plotting options
 rc("figure", figsize=(4.5, 2.6))
 rc("font", size=10.0)
 rc("lines", linewidth=1.5)
@@ -84,7 +86,7 @@ function verify_correction3D_2()
 end
 
 
-"Tests (but no verifies, since there is nothing to compare to) that the
+"Tests (but only verifies, since there is nothing to compare to) that the
 extrapolation method from `airfoilprep.py` is being called correctly. This
 method takes airfoil curves an extrapolates them all around 360 degrees.
 NOTE: CDmax in that function is the drag coeff at alpha=90deg or
@@ -123,13 +125,11 @@ function test_extrapolation(; alphas=[i for i in -10:1.0:20], iter=100,
 end
 
 
-# """#-------- TEST NDtools --------#
-#
-# #Use S809 NREL airfoil:
-# #1) Verify Cl, Cd, Cm
-# #2) Verify 3d correction
-# #3) Verify extrapolation
-# """
+"""#-------- TEST NDtools Automated Table Generation from Input Function --------#
+
+#Use S809 NREL airfoil:
+#1) Verify Cl, Cd, Cm with data from airfoiltool.com
+"""
 function validateNDtools_from_Xfoil()
 
     #--- Load in Airfoiltools.com S809 Data ---#
@@ -144,6 +144,7 @@ function validateNDtools_from_Xfoil()
 
     AirfoilToolsData = (S809_Re2E5,S809_Re5E5,S809_Re1E6)
 
+    #Load in airfoil x and y points
     folder,_ = splitdir(@__FILE__)
     airfoil_file = joinpath(folder,"data","S809.txt")
     headerlines = 2
@@ -159,12 +160,15 @@ function validateNDtools_from_Xfoil()
         end
     end
 
+    # Define operating conditions
     aoas = collect(linspace(-15,25,41))#linspace(-10,10,20)
     Res = [2E5,3E5,4E5,5E5,6E5,7E5,8E5,9E5,1E6]
     Ms = [0.0,0.01]
 
-    #Wapper function for my analysis code: happens to be Xfoil
+    #Wapper function for my analysis code: Xfoil for this test
+    println("Running Xfoil as Airfoil Data generator")
     function f(Re,M)
+        # Note that aoas is inherited for more efficient xfoil operation
         cls,cds,cdps,cms,convs =Xfoil.xfoilsweep(x,y,aoas,Re;iter=100,npan=140,mach=M,
         percussive_maintenance=true,printdata=true,zeroinit=true,clmaxstop=true,clminstop=true)
 
@@ -177,8 +181,7 @@ function validateNDtools_from_Xfoil()
     response_names = ["cl","cd","cm","convs"]
 
     #Since the version of Xfoil being used is more efficient if it handles the aoa sweep, we'll not generate a table with it yet.
-    response_values = AirfoilPrep.genNDarray(f,response_names,var_input[2:end],var_names[2:end];
-    savefile=false,tablename="tableND")
+    response_values = AirfoilPrep.genNDarray(f,response_names,var_input[2:end],var_names[2:end])
 
     # Reformat to get the ND array in the right format for my specific problem, ie
     # a table of responses lining up to aoa, re, mach
@@ -207,15 +210,15 @@ function validateNDtools_from_Xfoil()
     cl = NDtable.response_values[1][myindices...] #Assumed cl to be first response
 
     # Spline the table
-    #Warning, the airfoil data here has non-converged points
+    #Warning, the airfoil data here has non-converged points and we'll filter them out later
     splout_non_extrap = AirfoilPrep.SplineND_from_tableND(NDtable)
-    test_cl = AirfoilPrep.interpND(splout_non_extrap[1],(0.0,2E5,0.0))
+
     #Plot the results
     Re_airfoiltools = [2E5,5E5,1E6]
-    aoas21 = []#linspace(-15,25,100)
+    aoas21 = []
     aoas2 = []
-    XfoilData_cl1 =[] #zeros(length(aoas2),length(Re_airfoiltools))
-    XfoilData_cl =[] #zeros(length(aoas2),length(Re_airfoiltools))
+    XfoilData_cl1 =[]
+    XfoilData_cl =[]
     vars = []
     for i = 1:length(Re_airfoiltools) #length of the airfoiltools data
         for j = 1:length(aoas)
@@ -231,30 +234,33 @@ function validateNDtools_from_Xfoil()
         aoas21 = []
     end
 
-    #Plot the AirfoilTools Data vs the newly generated data
-    PyPlot.figure("Verify_NDspline")
-    NDTable_error_max = 0.0
+    # Check the cl error from an original run
+    NDSpl_maxerror_cl = 0.0
     OldXfoilData_s809_Re2E5 = [-0.473515, -0.648893, -0.528673, -0.492563, -0.357591, -0.209986, -0.110082, -0.0481071, 0.00891502, 0.113733, 0.17017, 0.235873, 0.327773, 0.41861, 0.527213, 0.633993, 0.746845, 0.87758, 0.977806, 0.954624, 0.926883]
     OldXfoilData_s809_Re5E5 = [-0.746883, -0.650123, -0.584852, -0.551076, -0.524587, -0.512261, -0.439827, -0.318644, -0.202955, -0.0871805, 0.0295255, 0.146385, 0.263179, 0.37841, 0.492835, 0.60978, 0.726073, 0.837511, 0.943375, 0.960604, 0.983048, 1.01456, 1.03991, 1.0668, 1.09374, 1.1144, 1.14403, 1.15379, 1.1609, 1.1431]
     OldXfoilData_s809_Re1E6 = [-0.809019, -0.867028, -0.75136, -0.688495, -0.653602, -0.622135, -0.57855, -0.519902, -0.448765, -0.327558, -0.208416, -0.0891631, 0.0295293, 0.148423, 0.267439, 0.386354, 0.50429, 0.621041, 0.736629, 0.851222, 0.914147, 0.97305, 1.02751, 1.07725, 1.12474, 1.17066, 1.20861, 1.23612, 1.2648, 1.29016, 1.29755, 1.31023]
     XfoilData_cl_old = (OldXfoilData_s809_Re2E5,OldXfoilData_s809_Re5E5,OldXfoilData_s809_Re1E6)
+
+    #Plot the AirfoilTools Data vs the newly generated data and calculate the error
+    PyPlot.figure("Verify_NDspline")
     for i = 1:length(Re_airfoiltools)
         PyPlot.plot(aoas2[i],XfoilData_cl[i],".-",color = color_cycle[i],label = "NDtools Re $(round(Int,Re_airfoiltools[i]))")
         PyPlot.plot(AirfoilToolsData[i][:,1],AirfoilToolsData[i][:,2],"--",color = color_cycle[i],label = "Aifoiltools.com Re $(round(Int,Re_airfoiltools[i]))")
-        NDTable_error_max = max(NDTable_error_max,maximum(abs.(XfoilData_cl[i]-XfoilData_cl_old[i])))
+        NDSpl_maxerror_cl = max(NDSpl_maxerror_cl,maximum(abs.(XfoilData_cl[i]-XfoilData_cl_old[i])))
     end
     PyPlot.xlabel("AOA")
     PyPlot.ylabel("cl")
     PyPlot.legend(loc = "best")
 
-
-
-    return NDTable_error_max,NDtable
+    return NDSpl_maxerror_cl,NDtable
 end
 
+"""#-------- TEST NDtools Integration with AirfoilPrep.py 3D correction and extrapolation--------#
 
-
-
+#Use S809 NREL airfoil data from previous test:
+#2) Verify 3d correction
+#3) Verify extrapolation
+"""
 function verifyNDtable_extrap(NDtable)
     # Test airfoilpreppy on the ND table
     r_over_R = 0.1
@@ -285,6 +291,8 @@ function verifyNDtable_extrap(NDtable)
 
     extrap_cl_old = (cl_re2E5,cl_re5E5,cl_re1E6)
     ND_corr3Dextr_maxerror_cl = 0.0
+
+    #Plot the output and get the error
     extrap_cl =zeros(length(extrap_aoas),length(Re_airfoiltools))
     PyPlot.figure("Verify_cl")
     for i = 1:length(Re_airfoiltools) #length of the airfoiltools data
@@ -311,6 +319,7 @@ function verifyNDtable_extrap(NDtable)
     extrap_cd_old = (cd_re2E5,cd_re5E5,cd_re1E6)
     ND_corr3Dextr_maxerror_cd = 0.0
 
+    #Plot the output and get the error
     extrap_cd =zeros(length(extrap_aoas),length(Re_airfoiltools))
     PyPlot.figure("Verify_cd")
     for i = 1:length(Re_airfoiltools) #length of the airfoiltools data
@@ -336,6 +345,7 @@ function verifyNDtable_extrap(NDtable)
     extrap_cm_old = (cm_re2E5,cm_re5E5,cm_re1E6)
     ND_corr3Dextr_maxerror_cm = 0.0
 
+    #Plot the output and get the error
     extrap_cm =zeros(length(extrap_aoas),length(Re_airfoiltools))
     PyPlot.figure("Verify_cm")
     for i = 1:length(Re_airfoiltools) #length of the airfoiltools data
@@ -350,10 +360,6 @@ function verifyNDtable_extrap(NDtable)
     PyPlot.xlabel("aoa (deg)")
     PyPlot.ylabel("cm")
 
-    vars = (0,1e6,0.01)
-    outputWORKS = AirfoilPrep.interpND(splout_extrap[1],vars)
-
-
     return ND_corr3Dextr_maxerror_cl,ND_corr3Dextr_maxerror_cd,ND_corr3Dextr_maxerror_cm
 end
 
@@ -361,17 +367,13 @@ end
 
 ERROR_TOL = 1E-4
 
-
 correction3D_error_max = verify_correction3D_2()
 
-println("Running Xfoil as Airfoil Data generator")
-NDTable_error_max,NDtable = validateNDtools_from_Xfoil()
+NDSpl_maxerror_cl,NDtable = validateNDtools_from_Xfoil()
 ND_corr3Dextr_maxerror_cl,ND_corr3Dextr_maxerror_cd,ND_corr3Dextr_maxerror_cm = verifyNDtable_extrap(NDtable)
 
 @test correction3D_error_max <= ERROR_TOL
-
-@test NDTable_error_max <= ERROR_TOL
-
-@test ND_corr3Dextr_maxerror_cl <= ERROR_TOL
+@test NDSpl_maxerror_cl <= ERROR_TOL
+@test ND_corr3Dextr_maxerror_cl <= ERROR_TOLc
 @test ND_corr3Dextr_maxerror_cd <= ERROR_TOL
 @test ND_corr3Dextr_maxerror_cm <= ERROR_TOL
