@@ -113,15 +113,19 @@ function NDTable_correction3D_extrap(NDtable,r_over_R,c_over_r,TSR;grid_alphas=[
     cd = [tup[2] for tup in response_values]
     cm = [tup[3] for tup in response_values]
 
-    cl2 = zeros(length(grid_alphas),size(NDtable.response_values[1])[2:end]...)
+    cl2 = zeros(length(grid_alphas),prod(size(NDtable.response_values[1])[2:end]))
     cd2 = zeros(cl2)
     cm2 = zeros(cl2)
     response_values_extrap = []
+    println(size(cl2))
     for i = 1:length(grid_alphas)
         cl2[i,:] = [aoa[i] for aoa in cl]
         cd2[i,:] = [aoa[i] for aoa in cd]
         cm2[i,:] = [aoa[i] for aoa in cm]
     end
+    cl2 = reshape(cl2,length(grid_alphas),size(NDtable.response_values[1])[2:end]...)
+    cd2 = reshape(cd2,length(grid_alphas),size(NDtable.response_values[1])[2:end]...)
+    cm2 = reshape(cm2,length(grid_alphas),size(NDtable.response_values[1])[2:end]...)
 
     # Reshape to be a float of floats(size(variable_inputs))
     response_values2 = Array{Array{Float64,length(NDtable.var_input)},1}(length(NDtable.response_values))

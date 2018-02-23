@@ -361,13 +361,17 @@ end
 
 ERROR_TOL = 1E-4
 
+
 correction3D_error_max = verify_correction3D_2()
+
+println("Running Xfoil as Airfoil Data generator")
+NDTable_error_max,NDtable = validateNDtools_from_Xfoil()
+ND_corr3Dextr_maxerror_cl,ND_corr3Dextr_maxerror_cd,ND_corr3Dextr_maxerror_cm = verifyNDtable_extrap(NDtable)
+
 @test correction3D_error_max <= ERROR_TOL
 
-NDTable_error_max,NDtable = validateNDtools_from_Xfoil()
 @test NDTable_error_max <= ERROR_TOL
 
-ND_corr3Dextr_maxerror_cl,ND_corr3Dextr_maxerror_cd,ND_corr3Dextr_maxerror_cm = verifyNDtable_extrap(NDtable)
 @test ND_corr3Dextr_maxerror_cl <= ERROR_TOL
 @test ND_corr3Dextr_maxerror_cd <= ERROR_TOL
 @test ND_corr3Dextr_maxerror_cm <= ERROR_TOL
