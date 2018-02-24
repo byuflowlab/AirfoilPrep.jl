@@ -2,6 +2,7 @@ module AirfoilPrep
 
 # ------------ GENERIC MODULES -------------------------------------------------
 using Dierckx
+using LiftProps
 #-------------Sub Routines --------------------------------------------
 include("AirfoilPreppy_Wrapper.jl")
 include("NDtools.jl")
@@ -10,7 +11,7 @@ include("NDtools.jl")
 """Internal: Break up functions calling airfoilpreppy for clarity,
 handles aoa extraction out of the ND array to feed into airfoilpreppy
 then puts it back into the correct ND array format for b-splining"""
-function afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,var_indices)
+function afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,CDmax,var_indices)
     # var_indices for airfoil data should be Re, Mach, then whatever
     var_indices = round.(Int,var_indices)
     idx_Re = var_indices[1]
@@ -43,25 +44,21 @@ function afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,var_indi
 
     # Warn if the number of converged points is less than half
     if i2<(length(cl)/2)
-        warn("Number of converged solutions is $(i2/length(cl))")
+        warn("Percent of converged solutions is $(i2/length(cl)*100)%")
     end
-
-
-    #TODO: Use xfoil finding of min and max linear?
-    #TODO: include logic to filter out bad data, or non-converged solutions,
 
     polar = Polar(Re, alpha2, cl2, cd2, cm2, coord[:,1], coord[:,2])
     # 3D corrected Polar
     #especially too high or low aoa for the conditions, possibly pop out data, then spline and resample?
-    AoAclmax = 5.0
-    AoAclmin = -2.0
-    CDmax = 1.3
+    liftslope,zeroliftangle,aoafit,clfit = fitliftslope(alpha2,cl2)
+    aoaclmaxlinear,clmaxlinear = LiftProps.findclmaxlinear(alpha2,cl2,liftslope,zeroliftangle;tol=0.1,interpolate=true)
+    aoaclminlinear,_ = LiftProps.findclmaxlinear(alpha2,-cl2,liftslope,zeroliftangle;tol=0.1,interpolate=true)
 
     newpolar = correction3D(polar, r_over_R, c_over_r, TSR,
-    alpha_linear_min=AoAclmin, alpha_linear_max=AoAclmax, alpha_max_corr=maximum(alpha2))
+    alpha_linear_min=aoaclminlinear, alpha_linear_max=aoaclmaxlinear, alpha_max_corr=maximum(alpha2))
 
     # Extrapolated polar
-    extrap_polar = APextrapolate(newpolar, CDmax;nalpha = 40,cdmin = minimum(cd2))
+    extrap_polar = APextrapolate(newpolar,CDmax; nalpha = 40)
 
     cl = extrap_polar.init_cl
     cd = extrap_polar.init_cd
@@ -121,7 +118,7 @@ runs airfoilprepy for each aoa vs cl,cd,cm,etc contained in a TableND object
         does include some robust measures to get rid of duplicate points, non-converged airfoil data
 
 """
-function NDTable_correction3D_extrap(NDtable,r_over_R,c_over_r,TSR;grid_alphas=[i for i in -180:1.0:180])
+function NDTable_correction3D_extrap(NDtable,r_over_R,c_over_r,TSR;grid_alphas=[i for i in -180:1.0:180],CDmax = 1.3)
     #Create array of indices to correctly access each cl curve
     var_indices = []# Array{Array{Int64,length(var_input)},1}(length(var_input))
     for i = 2:length(NDtable.var_input) #skip first dimension, assumed to be AOA
@@ -132,7 +129,7 @@ function NDTable_correction3D_extrap(NDtable,r_over_R,c_over_r,TSR;grid_alphas=[
     coord = zeros(10,2) #TODO? airfoil not included here
 
     function afpreppy_wrap2(var_indices...)
-        cl,cd,cm = afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,var_indices)
+        cl,cd,cm = afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,CDmax,var_indices)
         return (cl,cd,cm)
     end
 

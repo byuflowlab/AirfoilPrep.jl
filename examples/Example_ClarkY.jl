@@ -99,11 +99,14 @@ end
 response_values2 = [cls,cds,cms,convs]
 NDtable = AirfoilPrep.TableND(response_values2,response_names,var_input,var_names)
 
+#Save the table
+fileLoc,_ = splitdir(@__FILE__)
+JLD.save("$(fileLoc)/Data/af_prop_ClarkY.jld", "NDtable", NDtable)
+
 # Includes convergence checking for airfoil data
 NDextrap3D_3Dtable = AirfoilPrep.NDTable_correction3D_extrap(NDtable,r_over_R,c_over_r,TSR;grid_alphas=grid_alphas)
 
-#Save the table
-JLD.save("$(fileLoc)/Data/af_prop_ClarkY.jld", "NDextrap3D_3Dtable", NDextrap3D_3Dtable)
+
 
 # Spline the table
 splout_extrap = AirfoilPrep.SplineND_from_tableND(NDextrap3D_3Dtable)
@@ -114,7 +117,7 @@ PyPlot.figure("Verify_cl")
 for i = 1:length(Res) #length of the airfoiltools data
     for j = 1:length(grid_alphas)
         vars = (grid_alphas[j],Res[i],0.0)
-        extrap_cl[j,i] = AirfoilPrep.interpND(splout_extrap[3],vars)
+        extrap_cl[j,i] = AirfoilPrep.interpND(splout_extrap[1],vars)
 
     end
     PyPlot.plot(grid_alphas,extrap_cl[:,i],label = "Re: $(Res[i])")
