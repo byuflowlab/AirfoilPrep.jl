@@ -1,19 +1,20 @@
 using AirfoilPrep
 using Xfoil
 using PyPlot
+PyPlot.close("all")
 using JLD
 using AirfoilManip
 
 
 # Define operating conditions
 aoas = collect(linspace(-15,25,41))#linspace(-10,10,20)
-Res = collect(linspace(9E5,1.3E6,5))
-Ms = collect(linspace(0,.3,4))
+Res = collect(linspace(1E5,1.8E6,7))
+Ms = collect(linspace(0,.4,5))
 r_over_R = 0.5
 c_over_r = 0.3
 TSR = 8.0
 grid_alphas=[i for i in -180:1.0:180]
-#
+
 # #**NOTE 2: Airfoil points x,y must go from trailing edge around the top, then the
 # #bottom and end back at the trailing edge.**
 #
@@ -105,7 +106,7 @@ grid_alphas=[i for i in -180:1.0:180]
 
 ## After saving your airfoil data, you would need to load it and do the following for your in-the-loop analysis
 
-#------- Example Extrapolation and Splining --------#
+# #------- Example Extrapolation and Splining --------#
 fileLoc,_ = splitdir(@__FILE__)
 NDtable = JLD.load("$(fileLoc)/Data/af_prop_ClarkY.jld")
 NDtable = NDtable["NDtable"]
@@ -117,7 +118,7 @@ NDextrap3D_3Dtable = AirfoilPrep.NDTable_correction3D_extrap(NDtable,r_over_R,c_
 # Spline the table
 splout_extrap = AirfoilPrep.SplineND_from_tableND(NDextrap3D_3Dtable)
 
-#Plot with varying Re
+#Plot cl
 extrap_cl =zeros(length(grid_alphas),length(Res))
 PyPlot.figure("Verify_cl_Re")
 for i = 1:length(Res) #length of the airfoiltools data
@@ -126,23 +127,51 @@ for i = 1:length(Res) #length of the airfoiltools data
         extrap_cl[j,i] = AirfoilPrep.interpND(splout_extrap[1],vars)
 
     end
-    PyPlot.plot(grid_alphas,extrap_cl[:,i],label = "Re: $(Res[i])")
+    PyPlot.plot(grid_alphas,extrap_cl[:,i],label = "Re: $(round(Int,Res[i]))")
 end
 PyPlot.xlabel("aoa (deg)")
 PyPlot.ylabel("cl")
 PyPlot.legend(loc = "best")
 
-#Plot with varying M
 extrap_cl =zeros(length(grid_alphas),length(Ms))
-PyPlot.figure("Verify_cd_M")
+PyPlot.figure("Verify_cl_M")
 for i = 1:length(Ms) #length of the airfoiltools data
     for j = 1:length(grid_alphas)
         vars = (grid_alphas[j],Res[end],Ms[i])
-        extrap_cl[j,i] = AirfoilPrep.interpND(splout_extrap[2],vars)
+        extrap_cl[j,i] = AirfoilPrep.interpND(splout_extrap[1],vars)
 
     end
     PyPlot.plot(grid_alphas,extrap_cl[:,i],label = "M: $(Ms[i])")
 end
 PyPlot.xlabel("aoa (deg)")
 PyPlot.ylabel("cl")
+PyPlot.legend(loc = "best")
+
+#Plot cd
+extrap_cd =zeros(length(grid_alphas),length(Res))
+PyPlot.figure("Verify_cd_Re")
+for i = 1:length(Res) #length of the airfoiltools data
+    for j = 1:length(grid_alphas)
+        vars = (grid_alphas[j],Res[i],0.0)
+        extrap_cd[j,i] = AirfoilPrep.interpND(splout_extrap[2],vars)
+
+    end
+    PyPlot.plot(grid_alphas,extrap_cd[:,i],label = "Re: $(round(Int,Res[i]))")
+end
+PyPlot.xlabel("aoa (deg)")
+PyPlot.ylabel("cd")
+PyPlot.legend(loc = "best")
+
+extrap_cd =zeros(length(grid_alphas),length(Ms))
+PyPlot.figure("Verify_cd_M")
+for i = 1:length(Ms) #length of the airfoiltools data
+    for j = 1:length(grid_alphas)
+        vars = (grid_alphas[j],Res[end],Ms[i])
+        extrap_cd[j,i] = AirfoilPrep.interpND(splout_extrap[2],vars)
+
+    end
+    PyPlot.plot(grid_alphas,extrap_cd[:,i],label = "M: $(Ms[i])")
+end
+PyPlot.xlabel("aoa (deg)")
+PyPlot.ylabel("cd")
 PyPlot.legend(loc = "best")
