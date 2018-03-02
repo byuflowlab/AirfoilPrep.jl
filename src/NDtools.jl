@@ -208,7 +208,7 @@ Defines the arrays needed for the julia map function to run all of the combinati
               end
 
               #Map to the spline index
-              var_nums[i] = splND.m_vars[i]*vars[i]+splND.b_vars[i]
+              var_nums[i] = round(Int,splND.m_vars[i]*vars[i]+splND.b_vars[i])
 
             end
             response = splND.spl_response[var_nums...]
