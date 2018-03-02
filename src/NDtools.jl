@@ -198,7 +198,7 @@ Defines the arrays needed for the julia map function to run all of the combinati
 
             var_nums = zeros(length(splND.var_names))
             for i = 1:length(splND.var_names)
-
+              println("here1")
               if vars[i]>maximum(splND.var_input[i])
                 # warn("Accessing spline in extrapolated area, capping at max. Variable $i value: $(vars[i])")
                 vars[i]=maximum(splND.var_input[i])
@@ -206,12 +206,13 @@ Defines the arrays needed for the julia map function to run all of the combinati
                 # warn("Accessing spline in extrapolated area, capping at min. Variable $i value: $(vars[i])")
                 vars[i]=minimum(splND.var_input[i])
               end
-
-              #Map to the spline index
+              println("here2")
+              #Map to the spline index #ISSUE SOMEWHERE HERE
               var_nums[i] = round(Int,splND.m_vars[i]*vars[i]+splND.b_vars[i])
-
+              println("here3")
             end
             response = splND.spl_response[var_nums...]
+            println("here4")
             # g = gradient(splND, var_nums...)
             return response#, g
           end
