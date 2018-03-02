@@ -200,7 +200,7 @@ function interpND(splND,vars)
     for i = 1:length(splND.var_names)
         var_nums[i] = splND.m_vars[i]*vars[i]+splND.b_vars[i]
         if vars[i]>maximum(splND.var_input[i]) || vars[i]<minimum(splND.var_input[i])
-            # warn("Accessing spline in extrapolated area, undefined behavior")
+            warn("Accessing spline in extrapolated area, undefined behavior. Variable $i value: $(splND.var_input[i])")
         end
     end
     response = splND.spl_response[var_nums...]
