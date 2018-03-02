@@ -93,8 +93,8 @@ function genMapInput(var_input)
 
       if (length(var_input[i])>2) #Catch single variable inputs before accessing them
           if (!isapprox((var_input[i][1]-var_input[i][2]), (var_input[i][2]-var_input[i][3])))
-              # error("Variable inputs MUST be linear for gridded interpolation
-              # $(var_input[i][1]-var_input[i][2]) != $(var_input[i][2]-var_input[i][3])")
+              error("Variable inputs MUST be linear for gridded interpolation
+              $(var_input[i][1]-var_input[i][2]) != $(var_input[i][2]-var_input[i][3])")
           end
       end
 
@@ -200,7 +200,7 @@ function interpND(splND,vars)
     for i = 1:length(splND.var_names)
         var_nums[i] = splND.m_vars[i]*vars[i]+splND.b_vars[i]
         if vars[i]>maximum(splND.var_input[i]) || vars[i]<minimum(splND.var_input[i])
-            warn("Accessing spline in extrapolated area, undefined behavior")
+            # warn("Accessing spline in extrapolated area, undefined behavior")
         end
     end
     response = splND.spl_response[var_nums...]
