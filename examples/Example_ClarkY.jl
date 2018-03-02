@@ -8,8 +8,8 @@ using AirfoilManip
 
 # Define operating conditions
 aoas = collect(linspace(-5,25,31))#linspace(-10,10,20)
-Res = collect(linspace(1000,100000,10))
-Ms = collect(linspace(0,.2,4))
+Res = collect(linspace(1000,1000000,30))
+Ms = collect(linspace(0,.8,9))
 r_over_R = 0.5
 c_over_r = 0.3
 TSR = 8.0
