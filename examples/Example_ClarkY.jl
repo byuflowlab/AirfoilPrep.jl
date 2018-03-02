@@ -7,10 +7,10 @@ using AirfoilManip
 
 
 # Define operating conditions
-aoas = collect(linspace(-5,25,31))#linspace(-10,10,20)
-Res = collect(linspace(1000,1000000,30))
-Ms = collect(linspace(0,.8,9))
-r_over_R = 0.5
+aoas = collect(linspace(-5,20,26))#linspace(-10,10,20)
+Res = collect(linspace(1000,500000,4))
+Ms = collect(linspace(0,.75,3))
+r_over_R = 0.75
 c_over_r = 0.3
 TSR = 8.0
 grid_alphas=[i for i in -180:1.0:180]
@@ -102,13 +102,13 @@ NDtable = AirfoilPrep.TableND(response_values2,response_names,var_input,var_name
 
 #Save the table
 fileLoc,_ = splitdir(@__FILE__)
-JLD.save("$(fileLoc)/Data/af_prop_ClarkY.jld", "NDtable", NDtable)
+JLD.save("$(fileLoc)/Data/af_prop_ClarkY_2.jld", "NDtable", NDtable)
 
 # After saving your airfoil data, you would need to load it and do the following for your in-the-loop analysis
 
 # #------- Example Extrapolation and Splining --------#
 fileLoc,_ = splitdir(@__FILE__)
-NDtable = JLD.load("$(fileLoc)/Data/af_prop_ClarkY.jld")
+NDtable = JLD.load("$(fileLoc)/Data/af_prop_ClarkY_2.jld")
 NDtable = NDtable["NDtable"]
 ## Includes convergence checking for airfoil data
 NDextrap3D_3Dtable = AirfoilPrep.NDTable_correction3D_extrap(NDtable,r_over_R,c_over_r,TSR;grid_alphas=grid_alphas)
@@ -123,7 +123,7 @@ extrap_cl =zeros(length(grid_alphas),length(Res))
 PyPlot.figure("Verify_cl_Re")
 for i = 1:length(Res) #length of the airfoiltools data
     for j = 1:length(grid_alphas)
-        vars = (grid_alphas[j],Res[i],0.0)
+        vars = [grid_alphas[j],Res[i],0.0]
         extrap_cl[j,i] = AirfoilPrep.interpND(splout_extrap[1],vars)
 
     end
@@ -137,7 +137,7 @@ extrap_cl =zeros(length(grid_alphas),length(Ms))
 PyPlot.figure("Verify_cl_M")
 for i = 1:length(Ms) #length of the airfoiltools data
     for j = 1:length(grid_alphas)
-        vars = (grid_alphas[j],Res[end],Ms[i])
+        vars = [grid_alphas[j],Res[end],Ms[i]]
         extrap_cl[j,i] = AirfoilPrep.interpND(splout_extrap[1],vars)
 
     end
@@ -152,7 +152,7 @@ extrap_cd =zeros(length(grid_alphas),length(Res))
 PyPlot.figure("Verify_cd_Re")
 for i = 1:length(Res) #length of the airfoiltools data
     for j = 1:length(grid_alphas)
-        vars = (grid_alphas[j],Res[i],0.0)
+        vars = [grid_alphas[j],Res[i],0.0]
         extrap_cd[j,i] = AirfoilPrep.interpND(splout_extrap[2],vars)
 
     end
@@ -166,7 +166,7 @@ extrap_cd =zeros(length(grid_alphas),length(Ms))
 PyPlot.figure("Verify_cd_M")
 for i = 1:length(Ms) #length of the airfoiltools data
     for j = 1:length(grid_alphas)
-        vars = (grid_alphas[j],Res[end],Ms[i])
+        vars = [grid_alphas[j],Res[1],Ms[i]]
         extrap_cd[j,i] = AirfoilPrep.interpND(splout_extrap[2],vars)
 
     end

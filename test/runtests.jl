@@ -211,7 +211,7 @@ function validateNDtools_from_Xfoil()
     NDtable = AirfoilPrep.TableND(response_values2,response_names,var_input,var_names)
 
     #Access the table example
-    myindices = (1,1,1)
+    myindices = [1,1,1]
     cl = NDtable.response_values[1][myindices...] #Assumed cl to be first response
 
     # Spline the table
@@ -234,7 +234,7 @@ function validateNDtools_from_Xfoil()
     for i = 1:length(Re_airfoiltools) #length of the airfoiltools data
         for j = 1:length(aoas)
             if NDtable.response_values[4][j,i,1]==true
-                vars = (aoas[j],Re_airfoiltools[i],0.0)
+                vars = [aoas[j],Re_airfoiltools[i],0.0]
                 #Corrupted spline because of Inf in points, use direct response values
                 push!(XfoilData_cl1,NDtable.response_values[1][j,Re_xfoil_idx[i],1])#push!(XfoilData_cl1,AirfoilPrep.interpND(splout_non_extrap[1],vars))
                 push!(XfoilData_cd1,NDtable.response_values[2][j,Re_xfoil_idx[i],1])#push!(XfoilData_cd1,AirfoilPrep.interpND(splout_non_extrap[2],vars))
@@ -350,7 +350,7 @@ function verifyNDtable_extrap(NDtable)
     PyPlot.figure("Verify_cl")
     for i = 1:length(Re_airfoiltools) #length of the airfoiltools data
         for j = 1:length(extrap_aoas)
-            vars = (extrap_aoas[j],Re_airfoiltools[i],0.0)
+            vars = [extrap_aoas[j],Re_airfoiltools[i],0.0]
             extrap_cl[j,i] = AirfoilPrep.interpND(splout_extrap[1],vars)
 
         end
@@ -376,7 +376,7 @@ function verifyNDtable_extrap(NDtable)
     PyPlot.figure("Verify_cd")
     for i = 1:length(Re_airfoiltools) #length of the airfoiltools data
         for j = 1:length(extrap_aoas)
-            vars = (extrap_aoas[j],Re_airfoiltools[i],0.0)
+            vars = [extrap_aoas[j],Re_airfoiltools[i],0.0]
             extrap_cd[j,i] = AirfoilPrep.interpND(splout_extrap[2],vars)
 
         end
@@ -401,7 +401,7 @@ function verifyNDtable_extrap(NDtable)
     PyPlot.figure("Verify_cm")
     for i = 1:length(Re_airfoiltools) #length of the airfoiltools data
         for j = 1:length(extrap_aoas)
-            vars = (extrap_aoas[j],Re_airfoiltools[i],0.0)
+            vars = [extrap_aoas[j],Re_airfoiltools[i],0.0]
             extrap_cm[j,i] = AirfoilPrep.interpND(splout_extrap[3],vars)
 
         end
