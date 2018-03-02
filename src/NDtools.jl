@@ -93,8 +93,8 @@ function genMapInput(var_input)
 
       if (length(var_input[i])>2) #Catch single variable inputs before accessing them
           if (!isapprox((var_input[i][1]-var_input[i][2]), (var_input[i][2]-var_input[i][3])))
-              error("Variable inputs MUST be linear for gridded interpolation
-              $(var_input[i][1]-var_input[i][2]) != $(var_input[i][2]-var_input[i][3])")
+              # error("Variable inputs MUST be linear for gridded interpolation
+              # $(var_input[i][1]-var_input[i][2]) != $(var_input[i][2]-var_input[i][3])")
           end
       end
 
