@@ -7,9 +7,9 @@ using AirfoilManip
 
 
 # Define operating conditions
-aoas = collect(linspace(-5,20,26))#linspace(-10,10,20)
-Res = collect(linspace(1000,500000,4))
-Ms = collect(linspace(0,.75,3))
+aoas = collect(linspace(-5,20,51))#linspace(-10,10,20)
+Res = collect(linspace(1000,1000000,2))
+Ms = collect(linspace(0,.75,2))
 r_over_R = 0.75
 c_over_r = 0.3
 TSR = 8.0
@@ -102,13 +102,13 @@ NDtable = AirfoilPrep.TableND(response_values2,response_names,var_input,var_name
 
 #Save the table
 fileLoc,_ = splitdir(@__FILE__)
-JLD.save("$(fileLoc)/Data/af_prop_ClarkY_2.jld", "NDtable", NDtable)
+JLD.save("$(fileLoc)/Data/af_prop_ClarkY.jld", "NDtable", NDtable)
 
 # After saving your airfoil data, you would need to load it and do the following for your in-the-loop analysis
 
 # #------- Example Extrapolation and Splining --------#
 fileLoc,_ = splitdir(@__FILE__)
-NDtable = JLD.load("$(fileLoc)/Data/af_prop_ClarkY_2.jld")
+NDtable = JLD.load("$(fileLoc)/Data/af_prop_ClarkY.jld")
 NDtable = NDtable["NDtable"]
 ## Includes convergence checking for airfoil data
 NDextrap3D_3Dtable = AirfoilPrep.NDTable_correction3D_extrap(NDtable,r_over_R,c_over_r,TSR;grid_alphas=grid_alphas)

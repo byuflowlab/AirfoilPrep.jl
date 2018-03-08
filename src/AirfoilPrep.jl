@@ -17,7 +17,7 @@ function afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,CDmax,va
     idx_Re = var_indices[1]
     idx_M = var_indices[2]
     #TODO: match input variable names to correct index instead of assuming
-    Re = round(Int,NDtable.var_input[2][idx_Re]) #Re assumed to be second variable
+    Re = NDtable.var_input[2][idx_Re] #Re assumed to be second variable
     M = NDtable.var_input[3][idx_M]
     alpha = NDtable.var_input[1] #AOA assumed to be in first variable
 
