@@ -48,7 +48,7 @@ bottom and end back at the trailing edge.**
 """
 type Polar
   # Initialization variables (USER INPUT)
-  init_Re::Int64                          # Reynolds number of this polar
+  init_Re::Float64                          # Reynolds number of this polar
   init_alpha::Array{Float64,1}            # Angles of attack (deg)
   init_cl::Array{Float64,1}               # Lift coefficient at each AOA.
   init_cd::Array{Float64,1}               # Drag coefficient at each AOA.
