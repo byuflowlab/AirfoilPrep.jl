@@ -174,7 +174,7 @@ function validateNDtools_from_Xfoil()
         cls,cds,cdps,cms,convs =Xfoil.xfoilsweep(x,y,aoas,Re;iter=100,npan=140,mach=M,
         percussive_maintenance=true,printdata=true,zeroinit=true,clmaxstop=true,clminstop=true)
 
-        return cls,cds+cdps,cms,convs
+        return cls,cds,cms,convs
     end
 
 

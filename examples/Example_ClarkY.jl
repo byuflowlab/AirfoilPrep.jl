@@ -67,7 +67,7 @@ function f(Re,M)
     percussive_maintenance=true,printdata=false,zeroinit=true,clmaxstop=true,clminstop=true)
 
     println("Re:$(round(Int,Re)), M:$(round(M,3))")
-    return cls,cds+cdps,cms,convs
+    return cls,cds,cms,convs
 end
 
 
