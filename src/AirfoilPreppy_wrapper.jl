@@ -12,7 +12,7 @@ filepath,_ = splitdir(@__FILE__)
 (file, filename, data) = imp.find_module("airfoilprep", ["$filepath/../../AirfoilPreppy/src/"])
 prepy = imp.load_module("airfoilprep", file, filename, data)
 
-include("AirfoilPreppy_Wrapper_misc.jl")
+include("airfoilpreppy_wrapper_misc.jl")
 
 
 
@@ -59,7 +59,7 @@ type Polar
   # Internal variables
   pyPolar::PyCall.PyObject
 
-  Polar(init_Re, init_alpha, init_cl, init_cd, init_cm, x, y,
+  Polar(init_Re, init_alpha, init_cl, init_cd, init_cm, x=Float64[], y=Float64[],
           pyPolar=prepy[:Polar](init_Re, init_alpha, init_cl, init_cd, init_cm)
         ) = new(
         init_Re, init_alpha, init_cl, init_cd, init_cm, x, y,

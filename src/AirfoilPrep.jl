@@ -4,7 +4,7 @@ module AirfoilPrep
 using Dierckx
 using LiftProps
 #-------------Sub Routines --------------------------------------------
-include("AirfoilPreppy_Wrapper.jl")
+include("AirfoilPreppy_wrapper.jl")
 include("NDtools.jl")
 
 
