@@ -3,8 +3,8 @@
 using Dierckx
 using Roots
 using PyCall
-using PyPlot
-using QuadGK
+# using PyPlot
+# using QuadGK
 
 # Wrap airfoilprep.py
 filepath,_ = splitdir(@__FILE__)
