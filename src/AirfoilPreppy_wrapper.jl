@@ -173,7 +173,7 @@ function APextrapolate(self::Polar, cdmax::Float64; AR=nothing, cdmin=0.001,
   return new_polar
 end
 
-"Plots this Polar. Give it `geometry=(x,y,1)` for ploting the airfoil geometry,
+"Plots this Polar. Give it geometry=(x,y,1) for ploting the airfoil geometry,
 where x and y are the points of the airfoil (the third number gives the size
 of the plot)"
 function plot(self::Polar; geometry::Bool=true, label="", style=".-",
