@@ -3,6 +3,7 @@
 using Dierckx
 using Roots
 using PyCall
+using LaTeXStrings
 # using PyPlot
 # using QuadGK
 
