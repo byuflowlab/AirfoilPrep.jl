@@ -6,12 +6,12 @@ Collection of airfoil pre-processing routines for creating splined airfoil data 
 
 1. Clone the repo:
 ```julia
-Pkg.clone(https://github.com/byuflowlab/AirfoilPrep.jl.git)
+Pkg.clone("https://github.com/byuflowlab/AirfoilPrep.jl.git")
 ```
 
 2. Requires the AirfoilPrep.py repository to be in the same working directory.  A hack is done by using Julia to put it in the .julia/vx.x folder
 ```julia
-Pkg.clone(https://github.com/byuflowlab/AirfoilPreppy.git)
+Pkg.clone("https://github.com/byuflowlab/AirfoilPreppy.git")
 ```
 
 
