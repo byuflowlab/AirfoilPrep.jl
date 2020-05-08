@@ -16,7 +16,7 @@ the following properties:
 
 NOTE:
 """
-type TableND
+mutable struct TableND
   # Initialization variables (USER INPUT)
 
   response_values
@@ -50,7 +50,7 @@ the following properties:
 
 NOTE:
 """
-type SplineND
+mutable struct SplineND
   # Initialization variables (USER INPUT)
   response_name
   spl_response
@@ -86,7 +86,7 @@ Defines the arrays needed for the julia map function to run all of the combinati
   """
   function genMapInput(var_input)
     # Set up map input based on variable inputs
-    map_in = Array{Array{Float64,length(var_input)},1}(length(var_input))
+    map_in = Array{Array{Float64,length(var_input)},1}(undef,length(var_input))
     # Iterate through each variable to get N matrices for the map function combinations
     for i = 1:length(var_input)
       # Check if var_inputs are linear
@@ -181,7 +181,7 @@ Defines the arrays needed for the julia map function to run all of the combinati
               #create splines for the reverse mapping of variables
               #y = mx+b or # = m*value+b (put in value, get out it's number)
               m_vars = zeros(length(tableND.var_names))
-              b_vars = zeros(m_vars)
+              b_vars = similar(m_vars)
               for j = 1:length(tableND.var_names)
                 m_vars[j] = (length(tableND.var_input[j])-1)/(maximum(tableND.var_input[j])-minimum(tableND.var_input[j]))
                 b_vars[j] = Float64(1-m_vars[j]*minimum(tableND.var_input[j]))

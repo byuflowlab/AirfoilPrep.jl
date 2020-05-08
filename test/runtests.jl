@@ -1,12 +1,13 @@
 using AirfoilPrep
-using Base.Test
+#using Base.Test
+using Test
 using Xfoil
 
 using CSV
 using PyPlot
 using JLD
-fileLoc,_ = splitdir(@__FILE__)
 
+fileLoc,_ = splitdir(@__FILE__)
 
 # Specify plotting options
 rc("figure", figsize=(4.5, 2.6))
@@ -16,7 +17,7 @@ rc("lines", markersize=3.0)
 rc("legend", frameon=false)
 rc("axes.spines", right=false, top=false)
 rc("figure.subplot", left=0.18, bottom=0.18, top=0.97, right=0.92)
-rc("axes", color_cycle=["348ABD", "A60628", "009E73", "7A68A6", "D55E00", "CC79A7"])
+# rc("axes", color_cycle=["348ABD", "A60628", "009E73", "7A68A6", "D55E00", "CC79A7"])
 color_cycle=["#348ABD", "#A60628", "#009E73", "#7A68A6", "#D55E00", "#CC79A7", "#000486","#700000","#006907","#4C0099"]
 
 PyPlot.close("all")
@@ -53,7 +54,7 @@ function verify_correction3D_2()
     plot(data[:,1], data[:,2], "-k", label="2D calculated")
 
     polar = AP.Polar(Re, data[:,1], data[:,2],
-    zeros(data[:,1]), zeros(data[:,1]),
+    zeros(length(data[:,1])), zeros(length(data[:,1])),
     Float64[], Float64[])
 
     # Hard code old solutions for error checking
@@ -109,7 +110,7 @@ function test_extrapolation(; alphas=[i for i in -10:1.0:20], iter=100,
     header=["angle", "Cl"], datarow=1)
 
     polar = AP.Polar(Re, data[:,1], data[:,2],
-    zeros(data[:,1]), zeros(data[:,1]),
+    zeros(length(data[:,1])), zeros(length(data[:,1])),
     Float64[], Float64[])
 
     newpolar = AP.correction3D(polar, r_over_R/100, c_over_r/100, TSR,
@@ -151,19 +152,19 @@ function validateNDtools_from_Xfoil()
     airfoil_file = joinpath(folder,"data","S809.txt")
     headerlines = 2
     open(airfoil_file,"r") do f
-        global  x = Array{Float64,1}(0)
-        global  y = Array{Float64,1}(0)
+        global  x = Array{Float64,1}(undef,0)
+        global  y = Array{Float64,1}(undef,0)
         for (i,line) in enumerate(eachline(f))
             if i>headerlines
-                x = append!(x,parse(split(chomp(line))[1]))
-                y = append!(y,parse(split(chomp(line))[2]))
+                x = append!(x,parse(Float64,split(chomp(line))[1]))
+                y = append!(y,parse(Float64,split(chomp(line))[2]))
             else
             end
         end
     end
 
     # Define operating conditions
-    aoas = collect(linspace(-15,25,41))#linspace(-10,10,20)
+    aoas = collect(range(-15,stop=25,length=41))#linspace(-10,10,20)
     Res = [2E5,3E5,4E5,5E5,6E5,7E5,8E5,9E5,1E6]
     Ms = [0.0,0.01]
 
@@ -191,9 +192,9 @@ function validateNDtools_from_Xfoil()
     # Reformat to get the ND array in the right format for my specific problem, ie
     # a table of responses lining up to aoa, re, mach
     cls = zeros(length(aoas),length(Res),length(Ms))
-    cds = zeros(cls)
-    cms = zeros(cls)
-    convs = zeros(cls)
+    cds = similar(cls)
+    cms = similar(cls)
+    convs = similar(cls)
 
     for i = 1:length(aoas)
         for j = 1:length(Res)
@@ -331,8 +332,8 @@ function verifyNDtable_extrap(NDtable)
 
     #Plot the output and get the error
     Re_airfoiltools = [2E5,5E5,1E6]
-    aoas = collect(linspace(-15,25,41))#linspace(-10,10,20)
-    extrap_aoas = linspace(-180,180,360)
+    aoas = collect(range(-15,stop=25,length=41))#linspace(-10,10,20)
+    extrap_aoas = range(-180,stop=180,length=360)
     vars = []
 
     #Verify cl

@@ -50,7 +50,6 @@ function afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,CDmax,va
     end
     # PyPlot.figure("$Re $M")
     # PyPlot.plot(alpha2,cl2)
-
     polar = Polar(Re, alpha2, cl2, cd2, cm2, coord[:,1], coord[:,2])
     # 3D corrected Polar
     #especially too high or low aoa for the conditions, possibly pop out data, then spline and resample?
@@ -136,7 +135,7 @@ function NDTable_correction3D_extrap(NDtable,r_over_R,c_over_r,TSR;grid_alphas=[
     #Create array of indices to correctly access each cl curve
     var_indices = []# Array{Array{Int64,length(var_input)},1}(length(var_input))
     for i = 2:length(NDtable.var_input) #skip first dimension, assumed to be AOA
-        push!(var_indices,linspace(1,length(NDtable.var_input[i]),length(NDtable.var_input[i])))
+        push!(var_indices,range(1,stop=length(NDtable.var_input[i]),length=length(NDtable.var_input[i])))
     end
     map_in = genMapInput(var_indices) #everything except AOA
 

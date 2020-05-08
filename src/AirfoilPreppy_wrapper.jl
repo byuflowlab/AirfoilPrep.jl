@@ -1,17 +1,22 @@
-
 # ------------ GENERIC MODULES -------------------------------------------------
 using Dierckx
 using Roots
 using PyCall
 using LaTeXStrings
-# using PyPlot
+using PyPlot
 # using QuadGK
 
 # Wrap airfoilprep.py
 filepath,_ = splitdir(@__FILE__)
-@pyimport imp
-(file, filename, data) = imp.find_module("airfoilprep", ["$filepath/../../AirfoilPreppy/src/"])
-prepy = imp.load_module("airfoilprep", file, filename, data)
+# @pyimport imp # syntax deprecated 
+
+const prepy = PyNULL()
+
+function __init__()
+    imp = pyimport("imp")
+    (file, filename, data) = imp.find_module("airfoilprep", ["$filepath/../../AirfoilPreppy/src/"])
+    copy!(prepy, imp.load_module("airfoilprep", file, filename, data))
+end
 
 include("airfoilpreppy_wrapper_misc.jl")
 
@@ -47,7 +52,7 @@ NOTE: `alpha` input and output is always in degrees.
 **NOTE 2: Airfoil points x,y must go from trailing edge around the top, then the
 bottom and end back at the trailing edge.**
 """
-type Polar
+mutable struct Polar
   # Initialization variables (USER INPUT)
   init_Re::Float64                          # Reynolds number of this polar
   init_alpha::Array{Float64,1}            # Angles of attack (deg)
@@ -60,11 +65,16 @@ type Polar
   # Internal variables
   pyPolar::PyCall.PyObject
 
-  Polar(init_Re, init_alpha, init_cl, init_cd, init_cm, x=Float64[], y=Float64[],
-          pyPolar=prepy[:Polar](init_Re, init_alpha, init_cl, init_cd, init_cm)
-        ) = new(
-        init_Re, init_alpha, init_cl, init_cd, init_cm, x, y,
-          pyPolar)
+#   Polar(init_Re, init_alpha, init_cl, init_cd, init_cm, x=Float64[], y=Float64[],
+#           pyPolar=prepy[:Polar](init_Re, init_alpha, init_cl, init_cd, init_cm)
+#         ) = new(
+#         init_Re, init_alpha, init_cl, init_cd, init_cm, x, y,
+#           pyPolar)
+    Polar(init_Re, init_alpha, init_cl, init_cd, init_cm, x=Float64[], y=Float64[],
+    pyPolar=prepy.Polar(init_Re, init_alpha, init_cl, init_cd, init_cm)
+    ) = new(
+    init_Re, init_alpha, init_cl, init_cd, init_cm, x, y,
+    pyPolar)
 end
 
 "Returns (alpha, cl) points of this Polar"
@@ -220,6 +230,8 @@ function plot(self::Polar; geometry::Bool=true, label="", style=".-",
   ylabel(L"C_m")
   grid(true, color="0.8", linestyle="--")
   if label!=""; legend(loc="best"); end;
+
+  return fig2
 end
 
 "Compares two polars. Returns [err1, err2, err3] with an error between 0 and 1
