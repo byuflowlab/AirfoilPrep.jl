@@ -33,11 +33,11 @@ function of angle of attack at a particular Reynolds number. This object acts
 as an interface for the Python object `Polar` from `airfoilprep.py`, with
 the following properties:
 
-  * `self.PyPolar[:Re]`     : (float) Reynolds number.
-  * `self.PyPolar[:alpha]`  : (array) Angles of attacks.
-  * `self.PyPolar[:cl]`     : (array) Lift coefficient at each AOA.
-  * `self.PyPolar[:cd]`     : (array) Drag coefficient at each AOA.
-  * `self.PyPolar[:cm]`     : (array) Moment coefficient at each AOA.
+  * `self.PyPolar.Re`     : (float) Reynolds number.
+  * `self.PyPolar.alpha`  : (array) Angles of attacks.
+  * `self.PyPolar.cl`     : (array) Lift coefficient at each AOA.
+  * `self.PyPolar.cd`     : (array) Drag coefficient at each AOA.
+  * `self.PyPolar.cm`     : (array) Moment coefficient at each AOA.
 
   # Arguments
   * Re::Int64               : Reynolds number of this polar
@@ -77,17 +77,21 @@ mutable struct Polar
     pyPolar)
 end
 
+"Returns Re of this Polar"
+function get_Re(self::Polar)
+  return self.pyPolar.Re
+end
 "Returns (alpha, cl) points of this Polar"
 function get_cl(self::Polar)
-  return (self.pyPolar[:alpha], self.pyPolar[:cl])
+  return (self.pyPolar.alpha, self.pyPolar.cl)
 end
 "Returns (alpha, cd) points of this Polar"
 function get_cd(self::Polar)
-  return (self.pyPolar[:alpha], self.pyPolar[:cd])
+  return (self.pyPolar.alpha, self.pyPolar.cd)
 end
 "Returns (alpha, cm) points of this Polar"
 function get_cm(self::Polar)
-  return (self.pyPolar[:alpha], self.pyPolar[:cm])
+  return (self.pyPolar.alpha, self.pyPolar.cm)
 end
 "Returns (x, y) points of the airfoil geometry of this Polar"
 function get_geometry(self::Polar)
@@ -134,7 +138,7 @@ Applies 3-D corrections for rotating sections from the 2-D data.
 function correction3D(self::Polar, r_over_R::Float64, chord_over_r::Float64,
                       tsr::Float64; alpha_max_corr=30, alpha_linear_min=-5,
                       alpha_linear_max=5)
-  new_pyPolar = self.pyPolar[:correction3D](r_over_R, chord_over_r, tsr,
+  new_pyPolar = self.pyPolar.correction3D(r_over_R, chord_over_r, tsr,
                   alpha_linear_min=alpha_linear_min,
                   alpha_linear_max=alpha_linear_max,
                   alpha_max_corr=alpha_max_corr)
@@ -178,7 +182,7 @@ Extrapolates force coefficients up to +/- 180 degrees using Viterna's method
 """
 function APextrapolate(self::Polar, cdmax::Float64; AR=nothing, cdmin=0.001,
                       nalpha=15)
-  new_pyPolar = self.pyPolar[:extrapolate](cdmax, AR=AR, cdmin=cdmin,
+  new_pyPolar = self.pyPolar.extrapolate(cdmax, AR=AR, cdmin=cdmin,
                                             nalpha=nalpha)
   new_polar = _pyPolar2Polar(new_pyPolar, self.x, self.y)
   return new_polar
@@ -204,7 +208,7 @@ function plot(self::Polar; geometry::Bool=true, label="", style=".-",
 
   # Lift
   subplot(131)
-  title("Lift curve at Re=$(self.pyPolar[:Re])")
+  title("Lift curve at Re=$(self.pyPolar.Re)")
   PyPlot.plot(alpha, cl, style, label=label)
   xlabel(L"Angle of attack $\alpha (^\circ)$")
   ylabel(L"C_l")
@@ -212,7 +216,7 @@ function plot(self::Polar; geometry::Bool=true, label="", style=".-",
   if label!=""; legend(loc="best"); end;
 
   subplot(132)
-  title("Drag polar at Re=$(self.pyPolar[:Re])")
+  title("Drag polar at Re=$(self.pyPolar.Re)")
   PyPlot.plot( cdpolar ? cl : alpha, cd, style, label=label)
   if cdpolar
     xlabel(L"C_l")
@@ -224,7 +228,7 @@ function plot(self::Polar; geometry::Bool=true, label="", style=".-",
   if label!=""; legend(loc="best"); end;
 
   subplot(133)
-  title("Moment curve at Re=$(self.pyPolar[:Re])")
+  title("Moment curve at Re=$(self.pyPolar.Re)")
   PyPlot.plot(alpha, cm, style, label=label)
   xlabel(L"Angle of attack $\alpha (^\circ)$")
   ylabel(L"C_m")
@@ -241,10 +245,10 @@ function compare(polar1::Polar, polar2::Polar; verbose::Bool=false)
   curves = [:cl, :cd, :cm]
 
   # Determines the range of alphas to compare
-  min_alpha1 = minimum(polar1.pyPolar[:alpha])
-  min_alpha2 = minimum(polar2.pyPolar[:alpha])
-  max_alpha1 = maximum(polar1.pyPolar[:alpha])
-  max_alpha2 = maximum(polar2.pyPolar[:alpha])
+  min_alpha1 = minimum(polar1.pyPolar.alpha)
+  min_alpha2 = minimum(polar2.pyPolar.alpha)
+  max_alpha1 = maximum(polar1.pyPolar.alpha)
+  max_alpha2 = maximum(polar2.pyPolar.alpha)
   min_alpha = max(min_alpha1, min_alpha2)
   max_alpha = min(max_alpha1, max_alpha2)
   if max_alpha < min_alpha # Case that ranges don't intercept
@@ -258,10 +262,9 @@ function compare(polar1::Polar, polar2::Polar; verbose::Bool=false)
   splines = Dict()
   for polar in [polar1, polar2] # each polar
     this_splines = []
-    for curve in curves # each curve
-      this_spline = Dierckx.Spline1D(polar.pyPolar[:alpha], polar.pyPolar[curve])
-      push!(this_splines, this_spline)
-    end
+    push!(this_splines, Dierckx.Spline1D(polar.pyPolar.alpha, polar.pyPolar.cl))
+    push!(this_splines, Dierckx.Spline1D(polar.pyPolar.alpha, polar.pyPolar.cd))
+    push!(this_splines, Dierckx.Spline1D(polar.pyPolar.alpha, polar.pyPolar.cm))
     splines[polar] = this_splines
   end
 
@@ -289,8 +292,8 @@ end
 ### INTERNAL FUNCTIONS #########################################################
 "Given a Python Polar object, it returns a julia Polar object"
 function _pyPolar2Polar(pyPolar::PyCall.PyObject, x, y)
-  polar = Polar(pyPolar[:Re], pyPolar[:alpha], pyPolar[:cl], pyPolar[:cd],
-                pyPolar[:cm], x, y)
+  polar = Polar(pyPolar.Re, pyPolar.alpha, pyPolar.cl, pyPolar.cd,
+                pyPolar.cm, x, y)
   return polar
 end
 ### END OF airfoilprep.py CLASS ################################################

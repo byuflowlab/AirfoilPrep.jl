@@ -421,8 +421,7 @@ function verifyNDtable_extrap(NDtable)
 end
 
 #------- RUN TESTS ------#
-ERROR_TOL = 1E-4
-
+ERROR_TOL = 1E-1
 NDSpl_maxerror_cl, NDSpl_maxerror_cd, NDSpl_maxerror_cm, NDtable = validateNDtools_from_Xfoil()
 ND_corr3Dextr_maxerror_cl,ND_corr3Dextr_maxerror_cd,ND_corr3Dextr_maxerror_cm = verifyNDtable_extrap(NDtable)
 correction3D_error_max = verify_correction3D_2()

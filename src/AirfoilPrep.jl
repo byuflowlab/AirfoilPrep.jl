@@ -6,6 +6,7 @@ using LiftProps
 #-------------Sub Routines --------------------------------------------
 include("AirfoilPreppy_wrapper.jl")
 include("NDtools.jl")
+include("xfoil_wrapper.jl")
 
 
 """Internal: Break up functions calling airfoilpreppy for clarity,
@@ -153,8 +154,8 @@ function NDTable_correction3D_extrap(NDtable,r_over_R,c_over_r,TSR;grid_alphas=[
     cm = [tup[3] for tup in response_values]
 
     cl2 = zeros(length(grid_alphas),prod(size(NDtable.response_values[1])[2:end]))
-    cd2 = zeros(cl2)
-    cm2 = zeros(cl2)
+    cd2 = similar(cl2) * 0.0
+    cm2 = similar(cl2) * 0.0
     response_values_extrap = []
 
     for i = 1:length(grid_alphas)
@@ -167,11 +168,11 @@ function NDTable_correction3D_extrap(NDtable,r_over_R,c_over_r,TSR;grid_alphas=[
     cm2 = reshape(cm2,length(grid_alphas),size(NDtable.response_values[1])[2:end]...)
 
     # Reshape to be a float of floats(size(variable_inputs))
-    response_values2 = Array{Array{Float64,length(NDtable.var_input)},1}(length(NDtable.response_values))
+    response_values2 = Array{Array{Float64,length(NDtable.var_input)},1}(undef,length(NDtable.response_values))
     response_values2[1] = cl2
     response_values2[2] = cd2
     response_values2[3] = cm2
-    response_values2[4] = ones(cm2)
+    response_values2[4] = ones(size(cm2))
 
     #update the variable input for the extrapolated aoa
     var_input = (grid_alphas,NDtable.var_input[2:end]...)
