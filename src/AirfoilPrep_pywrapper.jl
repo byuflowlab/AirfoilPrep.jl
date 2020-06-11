@@ -1,27 +1,3 @@
-# ------------ GENERIC MODULES -------------------------------------------------
-using Dierckx
-using Roots
-using PyCall
-using LaTeXStrings
-using PyPlot
-# using QuadGK
-
-# Wrap airfoilprep.py
-filepath,_ = splitdir(@__FILE__)
-# @pyimport imp # syntax deprecated 
-
-const prepy = PyNULL()
-
-function __init__()
-    imp = pyimport("imp")
-    (file, filename, data) = imp.find_module("airfoilprep", ["$filepath/../../AirfoilPreppy/src/"])
-    copy!(prepy, imp.load_module("airfoilprep", file, filename, data))
-end
-
-include("airfoilpreppy_wrapper_misc.jl")
-
-
-
 ################################################################################
 # airfoilprep.py WRAPPER CLASS
 ################################################################################

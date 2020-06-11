@@ -1,6 +1,6 @@
 The AirfoilPrep.jl package is licensed under the MIT "Expat" License:
 
-> Copyright (c) 2018: moore54.
+> Copyright (c) 2018: FLOW Lab.
 >
 > Permission is hereby granted, free of charge, to any person obtaining a copy
 > of this software and associated documentation files (the "Software"), to deal
