@@ -64,25 +64,33 @@ end
 
 "Receives a .dat file as pulled from airfoiltools.com containing the x and y
 contour coordinates of an airfoil, and returns arrays x and y."
-function readcontour(file_name; header_len=1)
-  x, y = Float64[], Float64[]
+function readcontour(file_name; header_len=1, delim=" ", path="", output="arrays")
 
-  open(file_name) do f
-    for (i,line) in enumerate(eachline(f))
+    x, y = Float64[], Float64[]
 
-      # Ignores header
-      if i<=header_len
-        nothing
-      # Parses each line
-      else
-        this_x, this_y = split(line)
-        push!(x, parse(Float64, this_x))
-        push!(y, parse(Float64, this_y))
-      end
+    open(joinpath(path,file_name)) do f
+        for (i,line) in enumerate(eachline(f))
 
+            # Ignores header
+            if i<=header_len
+                nothing
+                # Parses each line
+            else
+                this_x, this_y = split(line, delim; keepempty=false)
+                push!(x, parse(Float64, this_x))
+                push!(y, parse(Float64, this_y))
+            end
+
+        end
     end
-  end
-  return x,y
+
+    if output=="arrays"
+        return x,y
+    elseif output=="matrix"
+        return hcat(x,y)
+    else
+        error("Invalid `output` argument $(output).")
+    end
 end
 
 """
