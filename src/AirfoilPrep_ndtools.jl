@@ -262,7 +262,7 @@ function afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,CDmax,va
 
     # Warn if the number of converged points is less than half
     if i2<(length(cl)/2)
-        warn("Percent of converged solutions is $(i2/length(cl)*100)%")
+        @warn("Percent of converged solutions is $(i2/length(cl)*100)%")
     end
     # PyPlot.figure("$Re $M")
     # PyPlot.plot(alpha2,cl2)
@@ -274,7 +274,7 @@ function afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,CDmax,va
     aoaclminlinear,_ = LiftProps.findclmaxlinear(alpha2,-cl2,liftslope,zeroliftangle;tol=0.1,interpolate=true)
 
     if aoaclmaxlinear<aoaclminlinear
-        warn("$aoaclmaxlinear max <$aoaclminlinear min degrees for linear region, correcting with min and max converged aoas (deg)")
+        @warn("$aoaclmaxlinear max <$aoaclminlinear min degrees for linear region, correcting with min and max converged aoas (deg)")
         aoaclmaxlinear = maximum(alpha2)
         aoaclminlinear = minimum(alpha2)
     end

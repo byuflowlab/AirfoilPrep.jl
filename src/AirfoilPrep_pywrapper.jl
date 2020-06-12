@@ -41,16 +41,11 @@ mutable struct Polar
   # Internal variables
   pyPolar::PyCall.PyObject
 
-#   Polar(init_Re, init_alpha, init_cl, init_cd, init_cm, x=Float64[], y=Float64[],
-#           pyPolar=prepy[:Polar](init_Re, init_alpha, init_cl, init_cd, init_cm)
-#         ) = new(
-#         init_Re, init_alpha, init_cl, init_cd, init_cm, x, y,
-#           pyPolar)
-    Polar(init_Re, init_alpha, init_cl, init_cd, init_cm, x=Float64[], y=Float64[],
-    pyPolar=prepy.Polar(init_Re, init_alpha, init_cl, init_cd, init_cm)
-    ) = new(
-    init_Re, init_alpha, init_cl, init_cd, init_cm, x, y,
-    pyPolar)
+  Polar(init_Re, init_alpha, init_cl, init_cd, init_cm, x=Float64[], y=Float64[],
+            pyPolar=prepy.Polar(init_Re, init_alpha, init_cl, init_cd, init_cm)
+        ) = new(
+            init_Re, init_alpha, init_cl, init_cd, init_cm, x, y,
+            pyPolar)
 end
 
 "Returns Re of this Polar"
@@ -77,6 +72,42 @@ end
 function dummy_polar()
   return Polar(-1, Float64[], Float64[], Float64[], Float64[],
     Float64[], Float64[])
+end
+"Reads a polar as downloaded from Airfoiltools.com"
+function read_polar(file_name::String; path::String="", x=Float64[],y=Float64[])
+  header = ["Alpha","Cl","Cd","Cdp","Cm","Top_Xtr","Bot_Xtr"]
+  data = CSV.read(joinpath(path,file_name), datarow=12, header=header)
+  polar = Polar(-1, data[:,1], data[:,2], data[:,3], data[:,5], x, y)
+  return polar
+end
+"Reads a polar as saved from a Polar object"
+function read_polar2(file_name::String; path::String="", x=Float64[],y=Float64[])
+  header = ["Alpha","Cl","Cd","Cm"]
+  data = CSV.read(joinpath(path,file_name), datarow=2, header=header)
+  polar = Polar(-1, data[:,1], data[:,2], data[:,3], data[:,4], x, y)
+  return polar
+end
+"Saves a polar in Polar format"
+function save_polar2(self::Polar, file_name::String; path::String="")
+  _file_name = file_name*(contains(file_name,".") ? "" : ".csv")
+  f = open(joinpath(path,_file_name),"w")
+
+  # Header
+  header = ["Alpha","Cl","Cd","Cm"]
+  for (i,h) in enumerate(header)
+    write(f, h)
+    write(f, i!=size(header)[1] ? "," : "\n")
+  end
+
+  # Data
+  alpha, cl = get_cl(self)
+  _, cd = get_cd(self)
+  _, cm = get_cm(self)
+  for (i,a) in enumerate(alpha)
+    write(f, "$a,$(cl[i]),$(cd[i]),$(cm[i])\n")
+  end
+
+  close(f)
 end
 
 """
@@ -112,7 +143,7 @@ Applies 3-D corrections for rotating sections from the 2-D data.
   the Eggers method :cite:`Eggers-Jr2003An-assessment-o` is used to correct drag.
 """
 function correction3D(self::Polar, r_over_R::Float64, chord_over_r::Float64,
-                      tsr::Float64; alpha_max_corr=30, alpha_linear_min=-5,
+                      tsr; alpha_max_corr=30, alpha_linear_min=-5,
                       alpha_linear_max=5)
   new_pyPolar = self.pyPolar.correction3D(r_over_R, chord_over_r, tsr,
                   alpha_linear_min=alpha_linear_min,
@@ -123,7 +154,7 @@ function correction3D(self::Polar, r_over_R::Float64, chord_over_r::Float64,
 end
 
 """
-  `APextrapolate(self::Polar, cdmax::Float64; AR=nothing, cdmin=0.001,
+  `extrapolate(self::Polar, cdmax::Float64; AR=nothing, cdmin=0.001,
                     nalpha=15)`
 Extrapolates force coefficients up to +/- 180 degrees using Viterna's method
 :cite:`Viterna1982Theoretical-and`.
@@ -156,7 +187,7 @@ Extrapolates force coefficients up to +/- 180 degrees using Viterna's method
   cdmax = 1.11 + 0.018*AR
 
 """
-function APextrapolate(self::Polar, cdmax::Float64; AR=nothing, cdmin=0.001,
+function extrapolate(self::Polar, cdmax::Float64; AR=nothing, cdmin=0.001,
                       nalpha=15)
   new_pyPolar = self.pyPolar.extrapolate(cdmax, AR=AR, cdmin=cdmin,
                                             nalpha=nalpha)
@@ -164,19 +195,20 @@ function APextrapolate(self::Polar, cdmax::Float64; AR=nothing, cdmin=0.001,
   return new_polar
 end
 
-"Plots this Polar. Give it geometry=(x,y,1) for ploting the airfoil geometry,
+"Plots this Polar. Give it `geometry=(x,y,1)` for ploting the airfoil geometry,
 where x and y are the points of the airfoil (the third number gives the size
 of the plot)"
 function plot(self::Polar; geometry::Bool=true, label="", style=".-",
-                              cdpolar=true)
+                              cdpolar=true, rfl_style="-", fig_id="polar_curves",
+                              title_str="automatic")
 
   # Geometry
   if geometry
     x,y = get_geometry(self)
-    plot_airfoil(x, y; label=label, style="-", figfactor=1.0)
+    plot_airfoil(x, y; label=label, style=rfl_style, figfactor=1.0, fig_id=fig_id*"_rfl")
   end
 
-  fig2 = figure("polar_curves", figsize=(7*3,5*1))
+  fig2 = figure(fig_id, figsize=(7*3,5*1))
 
   alpha, cl = get_cl(self)
   _, cd = get_cd(self)
@@ -184,15 +216,16 @@ function plot(self::Polar; geometry::Bool=true, label="", style=".-",
 
   # Lift
   subplot(131)
-  title("Lift curve at Re=$(self.pyPolar.Re)")
+  ttl = title_str=="automatic" ? "$(self.pyPolar.Re)" : title_str
+  title("Lift curve at Re=$ttl")
   PyPlot.plot(alpha, cl, style, label=label)
   xlabel(L"Angle of attack $\alpha (^\circ)$")
   ylabel(L"C_l")
   grid(true, color="0.8", linestyle="--")
-  if label!=""; legend(loc="best"); end;
+  # if label!=""; legend(loc="best"); end;
 
   subplot(132)
-  title("Drag polar at Re=$(self.pyPolar.Re)")
+  title("Drag polar at Re=$ttl")
   PyPlot.plot( cdpolar ? cl : alpha, cd, style, label=label)
   if cdpolar
     xlabel(L"C_l")
@@ -201,17 +234,15 @@ function plot(self::Polar; geometry::Bool=true, label="", style=".-",
   end
   ylabel(L"C_d")
   grid(true, color="0.8", linestyle="--")
-  if label!=""; legend(loc="best"); end;
+  # if label!=""; legend(loc="best"); end;
 
   subplot(133)
-  title("Moment curve at Re=$(self.pyPolar.Re)")
+  title("Moment curve at Re=$ttl")
   PyPlot.plot(alpha, cm, style, label=label)
   xlabel(L"Angle of attack $\alpha (^\circ)$")
   ylabel(L"C_m")
   grid(true, color="0.8", linestyle="--")
   if label!=""; legend(loc="best"); end;
-
-  return fig2
 end
 
 "Compares two polars. Returns [err1, err2, err3] with an error between 0 and 1
@@ -228,7 +259,7 @@ function compare(polar1::Polar, polar2::Polar; verbose::Bool=false)
   min_alpha = max(min_alpha1, min_alpha2)
   max_alpha = min(max_alpha1, max_alpha2)
   if max_alpha < min_alpha # Case that ranges don't intercept
-    warn("Requested comparison of polar that don't coincide. Returning -1.")
+    @warn("Requested comparison of polar that don't coincide. Returning -1.")
     return [-1,-1,-1]
   end
 
@@ -238,9 +269,10 @@ function compare(polar1::Polar, polar2::Polar; verbose::Bool=false)
   splines = Dict()
   for polar in [polar1, polar2] # each polar
     this_splines = []
-    push!(this_splines, Dierckx.Spline1D(polar.pyPolar.alpha, polar.pyPolar.cl))
-    push!(this_splines, Dierckx.Spline1D(polar.pyPolar.alpha, polar.pyPolar.cd))
-    push!(this_splines, Dierckx.Spline1D(polar.pyPolar.alpha, polar.pyPolar.cm))
+    for curve in curves # each curve
+      this_spline = Dierckx.Spline1D(polar.pyPolar.alpha, getproperty(polar.pyPolar, curve))
+      push!(this_splines, this_spline)
+    end
     splines[polar] = this_splines
   end
 
@@ -264,6 +296,43 @@ function compare(polar1::Polar, polar2::Polar; verbose::Bool=false)
   return out
 end
 
+"Returns a polar that is injective in alpha (angles are unique)"
+function injective(polar::Polar; start_i::Int64=2)
+  alpha, cl = get_cl(polar)
+  _, cd = get_cd(polar)
+  _, cm = get_cm(polar)
+
+  # New polar data
+  out_a, out_cl, out_cd, out_cm = Float64[], Float64[], Float64[], Float64[]
+
+  # Iterates over data averaging repeated angles
+  ave_val = Dict("a"=>0.0, "cl"=>0.0, "cd"=>0.0, "cm"=>0.0, "cum_i"=>0)
+  for (i,this_a) in enumerate(alpha)
+
+    # Accumulates repeated values
+    ave_val["a"] += this_a
+    ave_val["cl"] += cl[i]
+    ave_val["cd"] += cd[i]
+    ave_val["cm"] += cm[i]
+    ave_val["cum_i"] += 1
+
+    # Averages repeated values
+    next_a = i!=size(alpha)[1] ? alpha[i+1] : nothing
+    if i<start_i || this_a!=next_a
+        push!(out_a, ave_val["a"]/ave_val["cum_i"])
+        push!(out_cl, ave_val["cl"]/ave_val["cum_i"])
+        push!(out_cd, ave_val["cd"]/ave_val["cum_i"])
+        push!(out_cm, ave_val["cm"]/ave_val["cum_i"])
+        ave_val = Dict("a"=>0.0, "cl"=>0.0, "cd"=>0.0, "cm"=>0.0, "cum_i"=>0)
+    end
+  end
+
+  # Injective polar
+  x, y = get_geometry(polar)
+  new_polar = Polar(get_Re(polar), out_a, out_cl, out_cd, out_cm, x, y)
+
+  return new_polar
+end
 
 ### INTERNAL FUNCTIONS #########################################################
 "Given a Python Polar object, it returns a julia Polar object"

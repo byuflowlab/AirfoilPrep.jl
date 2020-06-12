@@ -32,7 +32,7 @@ function generate_aerodyn_file(file_name, re, AoA_d,clmin,clmax,AoA_zl_d,
 
   f = open(_file_name,"a")
   open(_file_name,"a") do x
-      for aoa in linspace(aoamin, aoamax, numPoints)
+      for aoa in range(aoamin, aoamax, length=numPoints)
           write(x,"$(aoa)\t $(Cl_spl(aoa))\t $(Cd_spl(aoa))\t $(Cm_spl(aoa)) \n")
       end
       write(x,"EOT")
@@ -43,13 +43,13 @@ end
 "Plots the contour of an airfoil given in x,y"
 function plot_airfoil(x::Array{Float64,1}, y::Array{Float64,1};
                       label="", style="-k", figfactor=1.0,
-                      title_str="Airfoil geometry")
+                      title_str="Airfoil geometry", fig_id="airfoil_geometry")
   # Sizes the figure
   figsize = [7*1.5,5*0.5]*figfactor
   xmin, xmax = -0.05, 1.05
   yrange = (xmax-xmin)/figsize[1] * figsize[2]
   ymin, ymax = -yrange/2, yrange/2
-  fig1 = figure("airfoil_geometry", figsize=(figsize[1], figsize[2]))
+  fig1 = figure(fig_id, figsize=(figsize[1], figsize[2]))
   xlim([xmin, xmax])
   ylim([ymin, ymax])
 
