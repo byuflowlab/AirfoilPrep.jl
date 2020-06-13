@@ -89,7 +89,7 @@ function read_polar2(file_name::String; path::String="", x=Float64[],y=Float64[]
 end
 "Saves a polar in Polar format"
 function save_polar2(self::Polar, file_name::String; path::String="")
-  _file_name = file_name*(contains(file_name,".") ? "" : ".csv")
+  _file_name = file_name*(occursin(".", file_name) ? "" : ".csv")
   f = open(joinpath(path,_file_name),"w")
 
   # Header
