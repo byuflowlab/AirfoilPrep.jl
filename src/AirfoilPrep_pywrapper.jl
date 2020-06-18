@@ -200,7 +200,10 @@ where x and y are the points of the airfoil (the third number gives the size
 of the plot)"
 function plot(self::Polar; geometry::Bool=true, label="", style=".-",
                               cdpolar=true, rfl_style="-", fig_id="polar_curves",
-                              title_str="automatic")
+                              figsize=[7, 5],
+                              title_str="automatic", polar_optargs=[],
+                              legend_optargs=[(:loc, "best")],
+                              to_plot=["Cl", "Cd", "Cm"])
 
   # Geometry
   if geometry
@@ -208,41 +211,53 @@ function plot(self::Polar; geometry::Bool=true, label="", style=".-",
     plot_airfoil(x, y; label=label, style=rfl_style, figfactor=1.0, fig_id=fig_id*"_rfl")
   end
 
-  fig2 = figure(fig_id, figsize=(7*3,5*1))
+  fig2 = figure(fig_id, figsize=figsize.*[length(to_plot), 1])
 
   alpha, cl = get_cl(self)
   _, cd = get_cd(self)
   _, cm = get_cm(self)
 
-  # Lift
-  subplot(131)
-  ttl = title_str=="automatic" ? "$(self.pyPolar.Re)" : title_str
-  title("Lift curve at Re=$ttl")
-  PyPlot.plot(alpha, cl, style, label=label)
-  xlabel(L"Angle of attack $\alpha (^\circ)$")
-  ylabel(L"C_l")
-  grid(true, color="0.8", linestyle="--")
-  # if label!=""; legend(loc="best"); end;
-
-  subplot(132)
-  title("Drag polar at Re=$ttl")
-  PyPlot.plot( cdpolar ? cl : alpha, cd, style, label=label)
-  if cdpolar
-    xlabel(L"C_l")
-  else
-    xlabel(L"Angle of attack $\alpha (^\circ)$")
+  if title_str !== "automatic"
+      suptitle(title_str)
   end
-  ylabel(L"C_d")
-  grid(true, color="0.8", linestyle="--")
-  # if label!=""; legend(loc="best"); end;
 
-  subplot(133)
-  title("Moment curve at Re=$ttl")
-  PyPlot.plot(alpha, cm, style, label=label)
-  xlabel(L"Angle of attack $\alpha (^\circ)$")
-  ylabel(L"C_m")
-  grid(true, color="0.8", linestyle="--")
-  if label!=""; legend(loc="best"); end;
+  ttl = title_str=="automatic" ? "$(self.pyPolar.Re)" : title_str
+  dims = 100 + 10*length(to_plot)
+
+  for (pi, this_plot) in enumerate(to_plot)
+
+      subplot(dims + pi)
+
+      if this_plot=="Cl"
+          if title_str=="automatic"; title("Lift curve at Re=$(self.pyPolar.Re)"); end;
+          PyPlot.plot(alpha, cl, style, label=label; polar_optargs...)
+          xlabel(L"Angle of attack $\alpha (^\circ)$")
+          ylabel(L"C_l")
+          grid(true, color="0.8", linestyle="--")
+
+
+      elseif this_plot=="Cd"
+          if title_str=="automatic"; title("Drag polar at Re=$(self.pyPolar.Re)"); end;
+          PyPlot.plot( cdpolar ? cl : alpha, cd, style, label=label; polar_optargs...)
+          if cdpolar
+            xlabel(L"C_l")
+          else
+            xlabel(L"Angle of attack $\alpha (^\circ)$")
+          end
+          ylabel(L"C_d")
+          grid(true, color="0.8", linestyle="--")
+
+
+      elseif this_plot=="Cm"
+          if title_str=="automatic"; title("Moment curve at Re=$(self.pyPolar.Re)"); end;
+          PyPlot.plot(alpha, cm, style, label=label; polar_optargs...)
+          xlabel(L"Angle of attack $\alpha (^\circ)$")
+          ylabel(L"C_m")
+          grid(true, color="0.8", linestyle="--")
+      end
+
+      if pi==length(to_plot); legend(; legend_optargs...); end;
+  end
 end
 
 "Compares two polars. Returns [err1, err2, err3] with an error between 0 and 1
