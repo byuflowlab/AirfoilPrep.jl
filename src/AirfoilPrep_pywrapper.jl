@@ -30,27 +30,50 @@ bottom and end back at the trailing edge.**
 """
 mutable struct Polar
   # Initialization variables (USER INPUT)
-  init_Re::Float64                          # Reynolds number of this polar
+  init_Re::Float64                        # Reynolds number of this polar
   init_alpha::Array{Float64,1}            # Angles of attack (deg)
   init_cl::Array{Float64,1}               # Lift coefficient at each AOA.
   init_cd::Array{Float64,1}               # Drag coefficient at each AOA.
   init_cm::Array{Float64,1}               # Moment coefficient at each AOA.
+  Ma::Float64                             # Mach number
+  npanels::Int                            # Number of panels
+  ncrit::Float64                          # XFOIL's turbulence transition parameter
   x::Array{Float64,1}                     # x-coordinates of airfoil geometry
   y::Array{Float64,1}                     # y-coordinates of airfoil geometry
+  xsepup::Array{Float64,1}                # Separation point over upper surface
+  xseplo::Array{Float64,1}                # Separation point over lower surface
 
   # Internal variables
   pyPolar::PyCall.PyObject
 
-  Polar(init_Re, init_alpha, init_cl, init_cd, init_cm, x=Float64[], y=Float64[],
+  Polar(init_Re, init_alpha, init_cl, init_cd, init_cm;
+            Ma=0.0, npanels=0, ncrit=0,
+            x=Float64[], y=Float64[],
+            xsepup=Float64[], xseplo=Float64[],
             pyPolar=prepy.Polar(init_Re, init_alpha, init_cl, init_cd, init_cm)
         ) = new(
-            init_Re, init_alpha, init_cl, init_cd, init_cm, x, y,
+            init_Re, init_alpha, init_cl, init_cd, init_cm,
+            Ma, npanels, ncrit,
+            x, y,
+            xsepup, xseplo,
             pyPolar)
 end
 
 "Returns Re of this Polar"
 function get_Re(self::Polar)
   return self.pyPolar.Re
+end
+"Returns Ma of this Polar"
+function get_Ma(self::Polar)
+  return self.Ma
+end
+"Returns number of panels of this Polar"
+function get_npanels(self::Polar)
+  return self.npanels
+end
+"Returns ncrit of this Polar"
+function get_ncrit(self::Polar)
+  return self.ncrit
 end
 "Returns (alpha, cl) points of this Polar"
 function get_cl(self::Polar)
@@ -63,6 +86,14 @@ end
 "Returns (alpha, cm) points of this Polar"
 function get_cm(self::Polar)
   return (self.pyPolar.alpha, self.pyPolar.cm)
+end
+"Returns (alpha, xsepup) points of this Polar"
+function get_xsepup(self::Polar)
+  return (self.init_alpha, self.xsepup)
+end
+"Returns (alpha, xseplo) points of this Polar"
+function get_xseplo(self::Polar)
+  return (self.init_alpha, self.xseplo)
 end
 "Returns (x, y) points of the airfoil geometry of this Polar"
 function get_geometry(self::Polar)
