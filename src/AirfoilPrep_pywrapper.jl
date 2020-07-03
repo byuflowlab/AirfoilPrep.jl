@@ -230,7 +230,7 @@ where x and y are the points of the airfoil (the third number gives the size
 of the plot)"
 function plot(self::Polar; geometry::Bool=true, label="", style=".-",
                               cdpolar=true, rfl_style="-", fig_id="polar_curves",
-                              figsize=[7, 5],
+                              figsize=[7, 5], rfl_figfactor=2/3,
                               title_str="automatic", polar_optargs=[],
                               legend_optargs=[(:loc, "best")],
                               to_plot=["Cl", "Cd", "Cm"])
@@ -238,7 +238,7 @@ function plot(self::Polar; geometry::Bool=true, label="", style=".-",
   # Geometry
   if geometry
     x,y = get_geometry(self)
-    plot_airfoil(x, y; label=label, style=rfl_style, figfactor=1.0, fig_id=fig_id*"_rfl")
+    plot_airfoil(x, y; label=label, style=rfl_style, figfactor=rfl_figfactor, fig_id=fig_id*"_rfl")
   end
 
   fig2 = figure(fig_id, figsize=figsize.*[length(to_plot), 1])
