@@ -14,7 +14,6 @@ Optional arguments:
 * alphas              : angles of attack (DEGREES) at which to evaluate XFOIL for Polar construction
 * M                   : desired Mach number
 * `iter::Int`         : XFOIL convergence iterations, default to 100.
-* `alpha_iter::Int`   : Max AOA convergence iterations, default to 10.
 * `verbose::Bool`     : Verbose.
 
 **NOTE: Airfoil points must go from trailing edge around the top, then the

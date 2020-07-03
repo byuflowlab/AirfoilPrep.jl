@@ -101,21 +101,20 @@ function get_geometry(self::Polar)
 end
 "Returns a dummy polar object"
 function dummy_polar()
-  return Polar(-1, Float64[], Float64[], Float64[], Float64[],
-    Float64[], Float64[])
+  return Polar(-1, Float64[], Float64[], Float64[], Float64[])
 end
 "Reads a polar as downloaded from Airfoiltools.com"
-function read_polar(file_name::String; path::String="", x=Float64[],y=Float64[])
+function read_polar(file_name::String; path::String="", optargs...)
   header = ["Alpha","Cl","Cd","Cdp","Cm","Top_Xtr","Bot_Xtr"]
   data = CSV.read(joinpath(path,file_name), datarow=12, header=header)
-  polar = Polar(-1, data[:,1], data[:,2], data[:,3], data[:,5], x, y)
+  polar = Polar(-1, data[:,1], data[:,2], data[:,3], data[:,5]; optargs...)
   return polar
 end
 "Reads a polar as saved from a Polar object"
-function read_polar2(file_name::String; path::String="", x=Float64[],y=Float64[])
+function read_polar2(file_name::String; path::String="", optargs...)
   header = ["Alpha","Cl","Cd","Cm"]
   data = CSV.read(joinpath(path,file_name), datarow=2, header=header)
-  polar = Polar(-1, data[:,1], data[:,2], data[:,3], data[:,4], x, y)
+  polar = Polar(-1, data[:,1], data[:,2], data[:,3], data[:,4]; optargs...)
   return polar
 end
 "Saves a polar in Polar format"
@@ -180,7 +179,7 @@ function correction3D(self::Polar, r_over_R::Float64, chord_over_r::Float64,
                   alpha_linear_min=alpha_linear_min,
                   alpha_linear_max=alpha_linear_max,
                   alpha_max_corr=alpha_max_corr)
-  new_polar = _pyPolar2Polar(new_pyPolar, self.x, self.y)
+  new_polar = _pyPolar2Polar(new_pyPolar; _get_nonpypolar_args(self)...)
   return new_polar
 end
 
@@ -222,7 +221,7 @@ function extrapolate(self::Polar, cdmax::Float64; AR=nothing, cdmin=0.001,
                       nalpha=15)
   new_pyPolar = self.pyPolar.extrapolate(cdmax, AR=AR, cdmin=cdmin,
                                             nalpha=nalpha)
-  new_polar = _pyPolar2Polar(new_pyPolar, self.x, self.y)
+  new_polar = _pyPolar2Polar(new_pyPolar; _get_nonpypolar_args(self)...)
   return new_polar
 end
 
@@ -374,17 +373,30 @@ function injective(polar::Polar; start_i::Int64=2)
   end
 
   # Injective polar
-  x, y = get_geometry(polar)
-  new_polar = Polar(get_Re(polar), out_a, out_cl, out_cd, out_cm, x, y)
+  new_polar = Polar(get_Re(polar), out_a, out_cl, out_cd, out_cm;
+                                        _get_nonpypolar_args(polar)...)
 
   return new_polar
 end
 
 ### INTERNAL FUNCTIONS #########################################################
 "Given a Python Polar object, it returns a julia Polar object"
-function _pyPolar2Polar(pyPolar::PyCall.PyObject, x, y)
+function _pyPolar2Polar(pyPolar::PyCall.PyObject; nonpypolar_args...)
   polar = Polar(pyPolar.Re, pyPolar.alpha, pyPolar.cl, pyPolar.cd,
-                pyPolar.cm, x, y)
+                pyPolar.cm; nonpypolar_args...)
   return polar
+end
+
+"Return arguments unrelated to airfoilpreppy"
+function _get_nonpypolar_args(polar::Polar)
+    ma = get_Ma(polar)
+    npanels = get_npanels(polar)
+    ncrit = get_ncrit(polar)
+    x, y = get_geometry(polar)
+    xsepup = get_xsepup(polar)[2]
+    xseplo = get_xseplo(polar)[2]
+
+    return ((:Ma, ma), (:npanels, npanels), (:ncrit, ncrit), (:x, x), (:y, y),
+                                        (:xsepup, xsepup), (:xseplo, xseplo))
 end
 ### END OF airfoilprep.py CLASS ################################################
