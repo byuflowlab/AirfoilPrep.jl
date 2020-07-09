@@ -176,7 +176,7 @@ function SplineND_from_tableND(tableND)
 
         #create splines for the reverse mapping of variables
         #y = mx+b or # = m*value+b (put in value, get out it's number)
-        m_vars = zeros(length(tableND.var_names))
+        m_vars = Vector{Float64}(undef, length(tableND.var_names))
         b_vars = similar(m_vars)
         for j = 1:length(tableND.var_names)
             m_vars[j] = (length(tableND.var_input[j]) - 1) / (maximum(tableND.var_input[j]) - minimum(tableND.var_input[j]))
@@ -193,7 +193,7 @@ end
 """helper function for accessing ND spline"""
 function interpND(splND, vars)
 
-    var_nums = zeros(length(splND.var_names))
+    var_nums = Vector{Float64}(undef, length(splND.var_names))
 
     for i = 1:length(vars)
 

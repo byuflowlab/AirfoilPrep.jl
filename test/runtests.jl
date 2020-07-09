@@ -356,8 +356,8 @@ function verifyNDtable_extrap(NDtable)
         for j = 1:length(extrap_aoas)
             vars = [extrap_aoas[j], Re_airfoiltools[i], 0.0]
             extrap_cl[j,i] = AirfoilPrep.interpND(splout_extrap[1], vars)
-
         end
+
         PyPlot.plot(extrap_aoas,extrap_cl[:,i], label = "Re: $(Re_airfoiltools[i])")
         # println(extrap_cl[:,i])
         ND_corr3Dextr_maxerror_cl = max(ND_corr3Dextr_maxerror_cl, maximum(abs.(extrap_cl[:,i] - extrap_cl_old[i])))
@@ -375,14 +375,14 @@ function verifyNDtable_extrap(NDtable)
     ND_corr3Dextr_maxerror_cd = 0.0
 
     #Plot the output and get the error
-    extrap_cd = zeros(length(extrap_aoas), length(Re_airfoiltools))
+    extrap_cd = Array{Float64}(undef, length(extrap_aoas), length(Re_airfoiltools))
     PyPlot.figure("Verify_cd")
     for i = 1:length(Re_airfoiltools) #length of the airfoiltools data
         for j = 1:length(extrap_aoas)
             vars = [extrap_aoas[j], Re_airfoiltools[i], 0.0]
             extrap_cd[j,i] = AirfoilPrep.interpND(splout_extrap[2], vars)
-
         end
+
         # println("cd")
         # println(extrap_cd[:,i])
         PyPlot.plot(extrap_aoas, extrap_cd[:,i], label = "Re: $(Re_airfoiltools[i])")
@@ -402,7 +402,7 @@ function verifyNDtable_extrap(NDtable)
     ND_corr3Dextr_maxerror_cm = 0.0
 
     #Plot the output and get the error
-    extrap_cm = zeros(length(extrap_aoas), length(Re_airfoiltools))
+    extrap_cm = Array{Float64}(undef, length(extrap_aoas), length(Re_airfoiltools))
     PyPlot.figure("Verify_cm")
     for i = 1:length(Re_airfoiltools) #length of the airfoiltools data
         for j = 1:length(extrap_aoas)
