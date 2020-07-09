@@ -266,12 +266,12 @@ function afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,CDmax,va
     end
     # PyPlot.figure("$Re $M")
     # PyPlot.plot(alpha2,cl2)
-    polar = Polar(Re, alpha2, cl2, cd2, cm2, coord[:,1], coord[:,2])
+    polar = Polar(Re, alpha2, cl2, cd2, cm2, x=coord[:,1], y=coord[:,2])
     # 3D corrected Polar
     #especially too high or low aoa for the conditions, possibly pop out data, then spline and resample?
     liftslope,zeroliftangle,aoafit,clfit = fitliftslope(alpha2,cl2)
-    aoaclmaxlinear,_ = LiftProps.findclmaxlinear(alpha2,cl2,liftslope,zeroliftangle;tol=0.1,interpolate=true)
-    aoaclminlinear,_ = LiftProps.findclmaxlinear(alpha2,-cl2,liftslope,zeroliftangle;tol=0.1,interpolate=true)
+    aoaclmaxlinear,_ = findclmaxlinear(alpha2,cl2,liftslope,zeroliftangle;tol=0.1,interpolate=true)
+    aoaclminlinear,_ = findclmaxlinear(alpha2,-cl2,liftslope,zeroliftangle;tol=0.1,interpolate=true)
 
     if aoaclmaxlinear<aoaclminlinear
         @warn("$aoaclmaxlinear max <$aoaclminlinear min degrees for linear region, correcting with min and max converged aoas (deg)")
@@ -287,7 +287,7 @@ function afpreppy_wrap3(NDtable,coord,grid_alphas,r_over_R,c_over_r,TSR,CDmax,va
     alpha_linear_min=aoaclminlinear, alpha_linear_max=aoaclmaxlinear, alpha_max_corr=maximum(alpha2))
 
     # Extrapolated polar
-    extrap_polar = APextrapolate(newpolar,CDmax; nalpha = 40)
+    extrap_polar = extrapolate(newpolar,CDmax; nalpha = 40)
 
     cl = extrap_polar.init_cl
     cd = extrap_polar.init_cd
