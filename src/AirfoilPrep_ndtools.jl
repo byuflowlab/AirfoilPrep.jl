@@ -171,7 +171,7 @@ Defines the arrays needed for the julia map function to run all of the combinati
             for i = 1:length(tableND.response_names)
               response = tableND.response_values[i]
 
-              spl_response = interpolate(response, BSpline(Cubic(Line())), OnCell())
+              spl_response = interpolate(response, BSpline(Cubic(Line(OnCell()))))
 
               #create splines for the reverse mapping of variables
               #y = mx+b or # = m*value+b (put in value, get out it's number)
