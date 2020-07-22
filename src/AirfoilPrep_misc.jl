@@ -2,41 +2,43 @@
 # MISCELLANOUS
 ################################################################################
 "Given the output of `airfoil_props()` it generates a file in aerodyn format"
-function generate_aerodyn_file(file_name, re, AoA_d,clmin,clmax,AoA_zl_d,
-                        lift_slope,cldata,cdfdata,cdpdata,cmdata; numPoints=100)
-  ncrit = "-"
+function generate_aerodyn_file(file_name, re, AoA_d, clmin, clmax,
+                                AoA_zl_d, lift_slope, cldata, cdfdata,
+                                cdpdata, cmdata; numPoints=100)
 
-  # Generates splines
-  Top_Xtr = zeros(AoA_d) # Dummy arrays
-  Bot_Xtr = zeros(AoA_d)
-  (Cl_spl, Cd_spl, Cdp_spl, Cm_spl, Top_Xtr_spl, Bot_Xtr_spl, aoaZeroCl,
-  aoaMinDrag, cdmin, aoamin, aoamax) = _makeSpline(AoA_d, cldata, cdfdata, cdpdata,
-  cmdata, Top_Xtr, Bot_Xtr)
+    ncrit = "-"
 
-  # Creates file
-  _file_name = file_name[end-3:end]==".dat" ? file_name : file_name*".dat"
+    # Generates splines
+    Top_Xtr = zeros(AoA_d) # Dummy arrays
+    Bot_Xtr = zeros(AoA_d)
+    (Cl_spl, Cd_spl, Cdp_spl, Cm_spl, Top_Xtr_spl, Bot_Xtr_spl, aoaZeroCl,
+        aoaMinDrag, cdmin, aoamin, aoamax) = _makeSpline(AoA_d, cldata, cdfdata, cdpdata,
+                                                            cmdata, Top_Xtr, Bot_Xtr)
 
-  write(_file_name,"    See filename for airfoil ID
-  Cl and Cd values uncorrected
-  line
-  1        Number of airfoil tables in this file
-  $(re/1e6)     Reynolds numbers in millions
-  0.0      Control setting
-  $(ncrit)     Stall angle (deg)
-  $aoaZeroCl   Zero Cn angle of attack (deg)
-  0.0   Cn slope for zero lift (dimensionless)
-  0.0   Cn extrapolated to value at positive stall angle of attack
-  0.0   Cn at stall value for negative angle of attack
-  $aoaMinDrag     Angle of attack for minimum CD (deg)
-  $cdmin   Minimum CD value\n")
+    # Creates file
+    _file_name = file_name[end-3:end]==".dat" ? file_name : file_name*".dat"
 
-  f = open(_file_name,"a")
-  open(_file_name,"a") do x
-      for aoa in range(aoamin, aoamax, length=numPoints)
-          write(x,"$(aoa)\t $(Cl_spl(aoa))\t $(Cd_spl(aoa))\t $(Cm_spl(aoa)) \n")
-      end
-      write(x,"EOT")
-  end
+    write(_file_name,"    See filename for airfoil ID
+    Cl and Cd values uncorrected
+    line
+    1        Number of airfoil tables in this file
+    $(re/1e6)     Reynolds numbers in millions
+    0.0      Control setting
+    $(ncrit)     Stall angle (deg)
+    $aoaZeroCl   Zero Cn angle of attack (deg)
+    0.0   Cn slope for zero lift (dimensionless)
+    0.0   Cn extrapolated to value at positive stall angle of attack
+    0.0   Cn at stall value for negative angle of attack
+    $aoaMinDrag     Angle of attack for minimum CD (deg)
+    $cdmin   Minimum CD value\n")
+
+    f = open(_file_name, "a")
+    open(_file_name, "a") do x
+        for aoa in range(aoamin, aoamax, length=numPoints)
+            write(x, "$(aoa)\t $(Cl_spl(aoa))\t $(Cd_spl(aoa))\t $(Cm_spl(aoa)) \n")
+        end
+        write(x, "EOT")
+    end
 
 end
 
@@ -69,11 +71,11 @@ function readcontour(file_name; header_len=1, delim=" ", path="", output="arrays
 
     x, y = Float64[], Float64[]
 
-    open(joinpath(path,file_name)) do f
-        for (i,line) in enumerate(eachline(f))
+    open(joinpath(path, file_name)) do f
+        for (i, line) in enumerate(eachline(f))
 
             # Ignores header
-            if i<=header_len
+            if i <= header_len
                 nothing
                 # Parses each line
             else
@@ -86,9 +88,9 @@ function readcontour(file_name; header_len=1, delim=" ", path="", output="arrays
     end
 
     if output=="arrays"
-        return x,y
+        return x, y
     elseif output=="matrix"
-        return hcat(x,y)
+        return hcat(x, y)
     else
         error("Invalid `output` argument $(output).")
     end
@@ -100,66 +102,67 @@ end
   points of the upper surface, ditto for `lower`. Both `upper` and `lower` are
   given in increasing order in x (i.e., from leading to trailing edge).
 """
-function splitcontour(x,y)
-  # ERROR CASES
-  if !(x[1] in [0.0, 1.0])
-    error("Invalid contour. x[1] must be either 0.0 or 1.0, got $(x[1]).")
-  end
-
-  # Flag indicating whether the contour start at the trailing or leading edge
-  start_TE = x[1]==1.0
-
-  # Find the opposite end of the contour
-  end_i = -1
-  for (i, xi) in enumerate(x)
-    if i==1
-      nothing
-    # Case of starting from the trailing edge
-    elseif start_TE && xi > x[i-1]
-      end_i = i-1
-      break
-    # Case of leading edge
-    elseif !start_TE  && xi < x[i-1]
-      end_i = i-1
-      break
+function splitcontour(x, y)
+    # ERROR CASES
+    if !(x[1] in [0.0, 1.0])
+        error("Invalid contour. x[1] must be either 0.0 or 1.0, got $(x[1]).")
     end
-  end
 
-  # ERROR CASE
-  if end_i==-1
-    error("Logic error! End of airfoil not found!")
-  end
+    # Flag indicating whether the contour start at the trailing or leading edge
+    start_TE = x[1]==1.0
 
-  # Splits them up
-  x_sec1, y_sec1 = x[1:end_i], y[1:end_i]
-  x_sec2, y_sec2 = x[end_i:end], y[end_i:end]
+    # Find the opposite end of the contour
+    end_i = -1
+    for (i, xi) in enumerate(x)
+        if i == 1
+            nothing
+          # Case of starting from the trailing edge
+        elseif start_TE && xi > x[i-1]
+            end_i = i - 1
+            break
+        # Case of leading edge
+        elseif !start_TE  && xi < x[i-1]
+            end_i = i - 1
+            break
+        end
+    end
 
-  # Sorts them from LE to TE
-  if x_sec1[1] > 0.5; reverse!(x_sec1); reverse!(y_sec1); end;
-  if x_sec2[1] > 0.5; reverse!(x_sec2); reverse!(y_sec2); end;
+    # ERROR CASE
+    if end_i == -1
+        error("Logic error! End of airfoil not found!")
+    end
 
-  # Determines upper and lower surfaces
-  if mean(y_sec1) > mean(y_sec2)
-    upper = [x_sec1, y_sec1]
-    lower = [x_sec2, y_sec2]
-  else
-    upper = [x_sec2, y_sec2]
-    lower = [x_sec1, y_sec1]
-  end
+    # Splits them up
+    x_sec1, y_sec1 = x[1:end_i], y[1:end_i]
+    x_sec2, y_sec2 = x[end_i:end], y[end_i:end]
 
-  return upper, lower
+    # Sorts them from LE to TE
+    if x_sec1[1] > 0.5; reverse!(x_sec1); reverse!(y_sec1); end;
+    if x_sec2[1] > 0.5; reverse!(x_sec2); reverse!(y_sec2); end;
+
+    # Determines upper and lower surfaces
+    if mean(y_sec1) > mean(y_sec2)
+        upper = [x_sec1, y_sec1]
+        lower = [x_sec2, y_sec2]
+    else
+        upper = [x_sec2, y_sec2]
+        lower = [x_sec1, y_sec1]
+    end
+
+    return upper, lower
 end
 
 ### INTERNAL FUNCTIONS #########################################################
 "Receives the output of `airfoil_props()` and returns splines of them"
-function _makeSpline(Alpha,Cl,Cd,Cdp,Cm,Top_Xtr,Bot_Xtr)
+function _makeSpline(Alpha, Cl, Cd, Cdp, Cm, Top_Xtr, Bot_Xtr)
+
   # Splines
-  Cl_spl = Dierckx.Spline1D(Alpha,Cl)
-  Cd_spl = Dierckx.Spline1D(Alpha,Cd+Cdp)
-  Cdp_spl = Dierckx.Spline1D(Alpha,Cdp)
-  Cm_spl = Dierckx.Spline1D(Alpha,Cm)
-  Top_Xtr_spl = Dierckx.Spline1D(Alpha,Top_Xtr)
-  Bot_Xtr_spl = Dierckx.Spline1D(Alpha,Bot_Xtr)
+  Cl_spl = Dierckx.Spline1D(Alpha, Cl)
+  Cd_spl = Dierckx.Spline1D(Alpha, Cd+Cdp)
+  Cdp_spl = Dierckx.Spline1D(Alpha, Cdp)
+  Cm_spl = Dierckx.Spline1D(Alpha, Cm)
+  Top_Xtr_spl = Dierckx.Spline1D(Alpha, Top_Xtr)
+  Bot_Xtr_spl = Dierckx.Spline1D(Alpha, Bot_Xtr)
 
   # Finds the zero-lift AOA
   zerolift(aoa) = Cl_spl(aoa)
@@ -167,14 +170,14 @@ function _makeSpline(Alpha,Cl,Cd,Cdp,Cm,Top_Xtr,Bot_Xtr)
 
   # Finds AOA of minimum drag
   step = 1e-6
-  zeroMinDrag(aoa) = (Cd_spl(aoa) - Cd_spl(aoa+step))/step
-  aoaMinDrag = Roots.fzero(zeroMinDrag, -8.0,10.0)
+  zeroMinDrag(aoa) = (Cd_spl(aoa) - Cd_spl(aoa+step)) / step
+  aoaMinDrag = Roots.fzero(zeroMinDrag, -8.0, 10.0)
   cdmin = Cd_spl(aoaMinDrag)
 
   aoamin = minimum(Alpha)
   aoamax = maximum(Alpha)
 
   return (Cl_spl, Cd_spl, Cdp_spl, Cm_spl, Top_Xtr_spl, Bot_Xtr_spl,
-          aoaZeroCl,aoaMinDrag, cdmin, aoamin, aoamax)
+          aoaZeroCl, aoaMinDrag, cdmin, aoamin, aoamax)
 end
 ### END OF TOOLS ###############################################################

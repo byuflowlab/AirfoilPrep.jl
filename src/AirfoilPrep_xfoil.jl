@@ -35,7 +35,7 @@ function runXFOIL(xs, ys, Re; alphas=range(-10, stop=25, step=0.5), Mach=0.0,
 
     # remove unconverged points
     (alphas_converged, cls_converged,
-     cds_converged, cms_converged,
+        cds_converged, cms_converged,
         xseps_converged) = removeSingularities(alphas, cls, cds, cdps, cms, xseps, convs)
 
     # use AirfoilPrep to wrap airfoilpreppy
