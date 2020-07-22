@@ -43,7 +43,8 @@ end
 "Plots the contour of an airfoil given in x,y"
 function plot_airfoil(x::Array{Float64,1}, y::Array{Float64,1};
                       label="", style="-k", figfactor=1.0,
-                      title_str="Airfoil geometry", fig_id="airfoil_geometry")
+                      title_str="Airfoil geometry", fig_id="airfoil_geometry",
+                      alpha=1.0)
   # Sizes the figure
   figsize = [7*1.5,5*0.5]*figfactor
   xmin, xmax = -0.05, 1.05
@@ -53,7 +54,7 @@ function plot_airfoil(x::Array{Float64,1}, y::Array{Float64,1};
   xlim([xmin, xmax])
   ylim([ymin, ymax])
 
-  PyPlot.plot(x,y, style, label=label)
+  PyPlot.plot(x,y, style, label=label, alpha=alpha)
   xlabel("x")
   ylabel("y")
   grid(true, color="0.8", linestyle="--")
