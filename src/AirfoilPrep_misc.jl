@@ -2,8 +2,8 @@
 # MISCELLANOUS
 ################################################################################
 "Given the output of `airfoil_props()` it generates a file in aerodyn format"
-function generate_aerodyn_file(file_name, re, AoA_d, clmin, clmax, 
-                                AoA_zl_d, lift_slope, cldata, cdfdata, 
+function generate_aerodyn_file(file_name, re, AoA_d, clmin, clmax,
+                                AoA_zl_d, lift_slope, cldata, cdfdata,
                                 cdpdata, cmdata; numPoints=100)
 
     ncrit = "-"
@@ -45,24 +45,24 @@ end
 "Plots the contour of an airfoil given in x,y"
 function plot_airfoil(x::Array{Float64,1}, y::Array{Float64,1};
                       label="", style="-k", figfactor=1.0,
-                      title_str="Airfoil geometry", fig_id="airfoil_geometry")
+                      title_str="Airfoil geometry", fig_id="airfoil_geometry",
+                      alpha=1.0)
+  # Sizes the figure
+  figsize = [7*1.5,5*0.5]*figfactor
+  xmin, xmax = -0.05, 1.05
+  yrange = (xmax-xmin)/figsize[1] * figsize[2]
+  ymin, ymax = -yrange/2, yrange/2
+  fig1 = figure(fig_id, figsize=(figsize[1], figsize[2]))
+  xlim([xmin, xmax])
+  ylim([ymin, ymax])
 
-    # Sizes the figure
-    figsize = [7 * 1.5, 5 * 0.5] * figfactor
-    xmin, xmax = -0.05, 1.05
-    yrange = (xmax - xmin) / figsize[1] * figsize[2]
-    ymin, ymax = -yrange / 2, yrange / 2
-    fig1 = figure(fig_id, figsize=(figsize[1], figsize[2]))
-    xlim([xmin, xmax])
-    ylim([ymin, ymax])
+  PyPlot.plot(x,y, style, label=label, alpha=alpha)
+  xlabel("x")
+  ylabel("y")
+  grid(true, color="0.8", linestyle="--")
+  title(title_str)
 
-    PyPlot.plot(x, y, style, label=label)
-    xlabel("x")
-    ylabel("y")
-    grid(true, color="0.8", linestyle="--")
-    title(title_str)
-
-    # if label!=""; legend(loc="best"); end;
+  # if label!=""; legend(loc="best"); end;
 end
 
 "Receives a .dat file as pulled from airfoiltools.com containing the x and y
