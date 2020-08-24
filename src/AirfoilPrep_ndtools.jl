@@ -193,8 +193,7 @@ end
 """helper function for accessing ND spline"""
 function interpND(splND, vars)
 
-    var_nums = Vector{Float64}(undef, length(splND.var_names))
-
+    var_nums = Vector{eltype(vars)}(undef, length(splND.var_names))
     for i = 1:length(vars)
 
         if vars[i] > maximum(splND.var_input[i])
