@@ -27,6 +27,7 @@ import numpy as np
 import cmath, mpmath
 from scipy.interpolate import RectBivariateSpline, bisplev
 import sys, copy, csv, subprocess, warnings, os
+from io import open
 try:
     import pyXLIGHT
 except:
@@ -319,7 +320,7 @@ class Polar(object):
             cd_cm = np.interp(alpha_cm, np.degrees(alpha), cd)  # get cd for applicable alphas
             alpha_low_deg = self.alpha[0]
             alpha_high_deg = self.alpha[-1]
-            for i in range(len(alpha_cm)):
+            for i in list(range(len(alpha_cm))):
                 cm_new = self.__getCM(i, cmCoef, alpha_cm, cl_cm, cd_cm, alpha_low_deg, alpha_high_deg)
                 if cm_new is None:
                     pass  # For when it reaches the range of cm's that the user provides
@@ -351,7 +352,7 @@ class Polar(object):
 
         found_zero_lift = False
 
-        for i in range(len(self.cm)):
+        for i in list(range(len(self.cm))):
             try:
                 if abs(self.alpha[i]) < 20.0 and self.cl[i] <= 0 and self.cl[i+1] >= 0:
                     p = -self.cl[i] / (self.cl[i + 1] - self.cl[i])
@@ -562,14 +563,14 @@ class Airfoil(object):
         numTables = int(f.readline().split()[0])
 
         # loop through tables
-        for i in range(numTables):
+        for i in list(range(numTables)):
 
             # read Reynolds number
             Re = float(f.readline().split()[0])*1e6
 
             # read Aerodyn parameters
             param = [0]*8
-            for j in range(8):
+            for j in list(range(8)):
                 param[j] = float(f.readline().split()[0])
 
             alpha = []
@@ -719,7 +720,7 @@ class Airfoil(object):
         # blend polars
         n = len(Relist)
         polars = [0]*n
-        for i in range(n):
+        for i in list(range(n)):
             p1 = self.getPolar(Relist[i])
             p2 = other.getPolar(Relist[i])
             polars[i] = p1.blend(p2, weight)
@@ -857,7 +858,7 @@ class Airfoil(object):
            f.write('{0:<10f}\t{1:40}'.format(param[5], 'Cn at stall value for negative angle of attack for linear Cn curve')+'\n')
            f.write('{0:<10f}\t{1:40}'.format(param[6], 'Angle of attack for minimum CD (deg)')+'\n')
            f.write('{0:<10f}\t{1:40}'.format(param[7], 'Minimum CD value')+'\n')
-           for a, cl, cd, cm in zip(p.alpha, p.cl, p.cd, p.cm):
+           for a, cl, cd, cm in list(zip(p.alpha, p.cl, p.cd, p.cm)):
                f.write('{:<10f}\t{:<10f}\t{:<10f}\t{:<10f}'.format(a, cl, cd, cm)+'\n')
            f.write('EOT\n')
         f.close()
@@ -1027,10 +1028,10 @@ class AirfoilAnalysis:
                         PrecomputationalOptions=dict(AirfoilParameterization='Blended', numAirfoilFamilies=2, numAirfoilsToCompute=10, tcMax=0.42, tcMin=0.13, airfoilShapeMethod='CoordinateFile'))
         # Override any provided airfoil options
         if afOptions is not None:
-            for k, v in afOptions.iteritems():
+            for k, v in afOptions.items:
                 if v is not None:
                     if type(v) is dict:
-                        for k2, v2 in afOptions[k].iteritems():
+                        for k2, v2 in afOptions[k].items:
                             if v2 is not None:
                                 defaultOptions[k][k2] = afOptions[k][k2]
                     else:
@@ -1193,13 +1194,13 @@ class AirfoilAnalysis:
         afFile = open(afFile, 'w')
         afFile.write('Airfoil\n')
         if x is None or y is None:
-            for i in range(len(self.x)):
+            for i in list(range(len(self.x))):
                 if complexNum:
                     afFile.write('{:<20f}\t{:<20f}'.format(complex(np.real(self.x_c[i]), np.imag(self.x_c[i])), complex(np.real(self.y_c[i]), np.imag(self.y_c[i]))) + '\n')
                 else:
                     afFile.write('{:<20f}\t{:<20f}'.format(self.x[i], self.y[i]) + '\n')
         else:
-            for i in range(len(x)):
+            for i in list(range(len(x)):
                 if complex:
                     afFile.write('{:<20f}\t{:<20f}'.format(complex(np.real(x[i]), np.imag(x[i])), complex(np.real(y[i]), np.imag(y[i]))) + '\n')
                 else:
@@ -1328,7 +1329,7 @@ class AirfoilAnalysis:
             x2, y2 = self.__cstCoordinatesReal(wl, wu, N, self.dz)
 
             f = 0
-            for i in range(N-1):
+            for i in list(range(N-1)):
                 f += abs(y1[i]*100 - y2[i]*100)**2
 
             g = []
@@ -1353,7 +1354,7 @@ class AirfoilAnalysis:
         slsqp(opt_prob, sens_type='FD')
         sol = opt_prob.solution(0)
         CST = np.zeros(8)
-        for i in range(len(CST)):
+        for i in list(range(len(CST))):
             CST[i] = sol._variables[i].value
         return CST
 
@@ -1473,13 +1474,13 @@ class AirfoilAnalysis:
             thickness_to_chord = Saf[0]
             blended_factor = Saf[1]
 
-            for i in range(len(self.thicknesses0)):
+            for i in list(range(len(self.thicknesses0))):
                 if thickness_to_chord >= self.thicknesses0[i] and thickness_to_chord < self.thicknesses0[i+1]:
                     x0 = self.xx0[i]
                     y0 = self.yy0[i]
                     yy0 = self.__convertTCCoordinates(thickness_to_chord, y0)
 
-            for i in range(len(self.thicknesses1)):
+            for i in list(range(len(self.thicknesses1))):
                 if thickness_to_chord >= self.thicknesses1[i] and thickness_to_chord < self.thicknesses1[i+1]:
                     x1 = self.xx1[i]
                     y1 = self.yy1[i]
@@ -1488,7 +1489,7 @@ class AirfoilAnalysis:
             xx = np.zeros(len(x1))
             yy = np.zeros(len(x1))
             if len(x1) == len(x0):
-                for i in range(len(x0)):
+                for i in list(range(len(x0))):
                     xx[i] = x1[i]
                     yy[i] = yy0[i] + blended_factor*(yy1[i] - yy0[i])
             else:
@@ -1498,7 +1499,7 @@ class AirfoilAnalysis:
                 thickness_to_chord = Saf[0]
             except:
                 thickness_to_chord = Saf
-            for i in range(len(self.thicknesses0)):
+            for i in list(range(len(self.thicknesses0))):
                 if thickness_to_chord >= self.thicknesses0[i] and thickness_to_chord < self.thicknesses0[i+1]:
                     x0 = self.xx0[i]
                     y0 = self.yy0[i]
@@ -1517,10 +1518,10 @@ class AirfoilAnalysis:
         yl = np.zeros(zerind)
         yu = np.zeros(len(xx)-zerind)
 
-        for z in range(len(xu)):
+        for z in list(range(len(xu))):
             xu[z] = xx[z]        # Lower surface x-coordinates
             yu[z] = yy[z]
-        for z in range(len(xl)):
+        for z in list(range(len(xl))):
             xl[z] = xx[z + zerind]   # Upper surface x-coordinates
             yl[z] = yy[z + zerind]
 
@@ -1580,7 +1581,7 @@ class AirfoilAnalysis:
         n = int(len(CST) / 2)
         wu = np.zeros(n)
         wl = np.zeros(n)
-        for j in range(n):
+        for j in list(range(n)):
             wl[j] = CST[j]
             wu[j] = CST[j + n]
         w1 = np.average(wl)
@@ -1637,25 +1638,25 @@ class AirfoilAnalysis:
         """
         # Class function; taking input of N1 and N2
         C = np.zeros(len(x))
-        for i in range(len(x)):
+        for i in list(range(len(x))):
             C[i] = x[i]**N1*((1-x[i])**N2)
 
         # Shape function; using Bernstein Polynomials
         n = len(w) - 1  # Order of Bernstein polynomials
 
         K = np.zeros(n+1)
-        for i in range(0, n+1):
+        for i in list(range(0, n+1)):
             K[i] = factorial(n)/(factorial(i)*(factorial((n)-(i))))
 
         S = np.zeros(len(x))
-        for i in range(len(x)):
+        for i in list(range(len(x))):
             S[i] = 0
-            for j in range(0, n+1):
+            for j in list(range(0, n+1)):
                 S[i] += w[j]*K[j]*x[i]**(j) * ((1-x[i])**(n-(j)))
 
         # Calculate y output
         y = np.zeros(len(x))
-        for i in range(len(y)):
+        for i in list(range(len(y))):
             y[i] = C[i] * S[i] + x[i] * dz
 
         return y
@@ -1682,25 +1683,25 @@ class AirfoilAnalysis:
         """
         # Class function; taking input of N1 and N2
         C = np.zeros(len(x), dtype=complex)
-        for i in range(len(x)):
+        for i in list(range(len(x))):
             C[i] = x[i]**N1*((1-x[i])**N2)
 
         # Shape function; using Bernstein Polynomials
         n = len(w) - 1  # Order of Bernstein polynomials
 
         K = np.zeros(n+1, dtype=complex)
-        for i in range(0, n+1):
+        for i in list(range(0, n+1)):
             K[i] = mpmath.factorial(n)/(mpmath.factorial(i)*(mpmath.factorial((n)-(i))))
 
         S = np.zeros(len(x), dtype=complex)
-        for i in range(len(x)):
+        for i in list(range(len(x))):
             S[i] = 0
-            for j in range(0, n+1):
+            for j in list(range(0, n+1)):
                 S[i] += w[j]*K[j]*x[i]**(j) * ((1-x[i])**(n-(j)))
 
         # Calculate y output
         y = np.zeros(len(x), dtype=complex)
-        for i in range(len(y)):
+        for i in list(range(len(y))):
             y[i] = C[i] * S[i] + x[i] * dz
 
         return y
@@ -1830,7 +1831,7 @@ class AirfoilAnalysis:
         """
         x = np.ones((N, 1))
         zeta = np.zeros((N, 1))
-        for z in range(0, N):
+        for z in list(range(0, N)):
             zeta[z] = 2 * pi / N * z
             if z == N - 1:
                 zeta[z] = 2.0 * pi
@@ -1845,9 +1846,9 @@ class AirfoilAnalysis:
         xl = np.zeros(zerind)
         xu = np.zeros(N-zerind)
 
-        for z in range(len(xl)):
+        for z in list(range(len(xl))):
             xl[z] = x[z]        # Lower surface x-coordinates
-        for z in range(len(xu)):
+        for z in list(range(len(xu))):
             xu[z] = x[z + zerind]   # Upper surface x-coordinates
 
         yl = self.__ClassShape(wl, xl, self.N1, self.N2, -self.dz) # Call ClassShape function to determine lower surface y-coordinates
@@ -1858,7 +1859,7 @@ class AirfoilAnalysis:
         # coord_split = [xl, yl, xu, yu]  # Combine x and y into single output
         # coord = [x, y]
         x1 = np.zeros(len(x))
-        for k in range(len(x)):
+        for k in list(range(len(x))):
             x1[k] = x[k][0]
         x = x1
 
@@ -1891,7 +1892,7 @@ class AirfoilAnalysis:
         # Populate x coordinates
         x = np.ones((N, 1), dtype=complex)
         zeta = np.zeros((N, 1)) #, dtype=complex)
-        for z in range(0, N):
+        for z in list(range(0, N)):
             zeta[z] = 2.0 * pi / N * z
             if z == N - 1:
                 zeta[z] = 2.0 * pi
@@ -1906,9 +1907,9 @@ class AirfoilAnalysis:
         xl = np.zeros(zerind, dtype=complex)
         xu = np.zeros(N-zerind, dtype=complex)
 
-        for z in range(len(xl)):
+        for z in list(range(len(xl))):
             xl[z] = x[z][0]        # Lower surface x-coordinates
-        for z in range(len(xu)):
+        for z in list(range(len(xu))):
             xu[z] = x[z + zerind][0]   # Upper surface x-coordinates
 
         yl = self.__ClassShapeComplex(wl, xl, self.N1, self.N2, -dz) # Call ClassShape function to determine lower surface y-coordinates
@@ -1919,7 +1920,7 @@ class AirfoilAnalysis:
         # coord_split = [xl, yl, xu, yu]  # Combine x and y into single output
         # coord = [x, y]
         x1 = np.zeros(len(x), dtype=complex)
-        for k in range(len(x)):
+        for k in list(range(len(x))):
             x1[k] = x[k][0]
         x = x1
         return x, y
@@ -1950,7 +1951,7 @@ class AirfoilAnalysis:
         # Populate x coordinates
         x = np.ones((N, 1), dtype=complex)
         zeta = np.zeros((N, 1)) #, dtype=complex)
-        for z in range(0, N):
+        for z in list(range(0, N)):
             zeta[z] = 2.0 * pi / N * z
             if z == N - 1:
                 zeta[z] = 2.0 * pi
@@ -1969,9 +1970,9 @@ class AirfoilAnalysis:
         xl = np.zeros(zerind, dtype=complex)
         xu = np.zeros(N-zerind, dtype=complex)
 
-        for z in range(len(xl)):
+        for z in list(range(len(xl))):
             xl[z] = x[z][0]        # Lower surface x-coordinates
-        for z in range(len(xu)):
+        for z in list(range(len(xu))):
             xu[z] = x[z + zerind][0]   # Upper surface x-coordinates
 
         yl = self.__ClassShapeComplex(wl, xl, N1, N2, -dz) # Call ClassShape function to determine lower surface y-coordinates
@@ -1982,7 +1983,7 @@ class AirfoilAnalysis:
         # coord_split = [xl, yl, xu, yu]  # Combine x and y into single output
         # coord = [x, y]
         x1 = np.zeros(len(x), dtype=complex)
-        for k in range(len(x)):
+        for k in list(range(len(x))):
             x1[k] = x[k][0]
         x = x1
         return x, y, xl, xu, yl, yu
@@ -2010,8 +2011,8 @@ class AirfoilAnalysis:
         """
         n = len(w) - 1
         dy_dw = np.zeros((n+1, len(x)))
-        for i in range(len(x)):
-            for j in range(0, n+1):
+        for i in list(range(len(x))):
+            for j in list(range(0, n+1)):
                 dy_dw[j][i] = x[i]**N1*((1-x[i])**N2) * factorial(n)/(factorial(j)*(factorial((n)-(j)))) * x[i]**(j) * ((1-x[i])**(n-(j)))
         return dy_dw
 
@@ -2040,7 +2041,7 @@ class AirfoilAnalysis:
         y = self.__ClassShape(w, x, N1, N2, dz)
         dy_total = np.zeros_like(dy_dw)
         n = len(w) - 1
-        for i in range(len(y)):
+        for i in list(range(len(y))):
             if i == 0 or i == len(y) - 1:
                 norm_y = 0
             else:
@@ -2056,7 +2057,7 @@ class AirfoilAnalysis:
                 dnormy = dnormy3 + dnormy4
 
                 norm_y = dnormy / np.sqrt(dnormy**2 + dnormx**2)
-            for j in range(0, n+1):
+            for j in list(range(0, n+1)):
                 dy_total[j][i] = dy_dw[j][i] * norm_y
         return dy_total
 
@@ -2136,7 +2137,7 @@ class AirfoilAnalysis:
                 fd_step = self.afOptions['GradientOptions']['fd_step']
                 cl_cur = self.cl_spline.ev(alpha, Re)
                 cd_cur = self.cd_spline.ev(alpha, Re)
-                for i in range(self.af_dof):
+                for i in list(range(self.af_dof)):
                     cl_new_fd = self.cl_splines_grad[i].ev(alpha, Re)
                     cd_new_fd = self.cd_splines_grad[i].ev(alpha, Re)
                     dcl_dSaf[i] = (cl_new_fd - cl_cur) / fd_step
@@ -2204,7 +2205,7 @@ class AirfoilAnalysis:
             if not all(np.diff(alpha)):
                 to_delete = np.zeros(0)
                 diff = np.diff(alpha)
-                for j in range(len(alpha)-1):
+                for j in list(range(len(alpha)-1)):
                     if not diff[j] > 0.0:
                         to_delete = np.append(to_delete, j)
                 alpha = np.delete(alpha, to_delete)
@@ -2232,7 +2233,7 @@ class AirfoilAnalysis:
                 if self.afOptions['GradientOptions']['ComputeAirfoilGradients'] and self.afOptions['GradientOptions']['ComputeGradient'] and self.afOptions['AirfoilParameterization'] != 'Precomputational':
                     self.cl_splines_new = [0]*self.af_dof
                     self.cd_splines_new = [0]*self.af_dof
-                    for i in range(self.af_dof):
+                    for i in list(range(self.af_dof)):
                         Saf_new = copy.deepcopy(self.Saf)
                         Saf_new[i] += self.afOptions['GradientOptions']['fd_step']
                         af = Airfoil.initFromAirfoilShape(Saf_new, self.afOptions)
@@ -2245,7 +2246,7 @@ class AirfoilAnalysis:
                         if not all(np.diff(alphas_new)):
                             to_delete = np.zeros(0)
                             diff = np.diff(alphas_new)
-                            for j in range(len(alphas_new)-1):
+                            for j in list(range(len(alphas_new)-1)):
                                 if not diff[j] > 0.0:
                                     to_delete = np.append(to_delete, j)
                             alphas_new = np.delete(alphas_new, to_delete)
@@ -2426,8 +2427,8 @@ class AirfoilAnalysis:
         CL = np.zeros((n, n))
         CD = np.zeros((n, n))
         [X, Y] = np.meshgrid(alpha, thick)
-        for i in range(n):
-            for j in range(n):
+        for i in list(range(n)):
+            for j in list(range(n)):
                 if splineNum == 0:
                     if not bem:
                         CL[i, j] = self.cl_total_spline0.ev(X[i, j], Y[i, j])
@@ -2521,17 +2522,17 @@ class AirfoilAnalysis:
 
         xs, ys, airfoil_thicknesses = [], [], []
 
-        for i in range(len(airfoilsSpecified)):
+        for i in list(range(len(airfoilsSpecified))):
             x, y = self.getCoordinates(airfoilsSpecified[i], airfoilShapeMethod=self.afOptions['PrecomputationalOptions']['airfoilShapeMethod']) #readCoordinateFile(airfoilsSpecified[i])]
             airfoil_thickness = max(y) - min(y)
             if airfoil_thickness > self.thick_max or airfoil_thickness < self.thick_min:
                 raise ValueError('Provided Airfoil %i of family %i surpassed bounds at thickness-to-chord ratio of %f. Please change PrecomputationalOption: tcMin or tcMax' % (i+1, splineNum, airfoil_thickness))
             xs.append(x), ys.append(y), airfoil_thicknesses.append(airfoil_thickness)
         self.airfoilsSpecified = copy.deepcopy(airfoil_thicknesses)
-        yx = zip(airfoil_thicknesses,xs)
+        yx = list(zip(airfoil_thicknesses,xs))
         yx.sort()
         x_sorted = [x for y, x in yx]
-        yx = zip(airfoil_thicknesses,ys)
+        yx = list(zip(airfoil_thicknesses,ys))
         yx.sort()
         y_sorted = [x for y, x in yx]
         airfoil_thicknesses.sort()
@@ -2542,9 +2543,9 @@ class AirfoilAnalysis:
         airfoils_to_add = n - len(thicknesses)
         if airfoils_to_add > 0:
             to_insert = np.linspace(self.thick_min, self.thick_max, 2+airfoils_to_add)
-            for j in range(len(to_insert)-2):
+            for j in list(range(len(to_insert)-2)):
                 alreadyFound = False
-                for k in range(len(thicknesses)):
+                for k in list(range(len(thicknesses))):
                     if to_insert[j+1] >= thicknesses[k] and to_insert[j+1] <= thicknesses[k+1] and not alreadyFound:
                         thicknesses.insert(k+1, to_insert[j+1])
                         yy.insert(k+1, self.__convertTCCoordinates(to_insert[j+1], yy[k]))
@@ -2585,7 +2586,7 @@ class AirfoilAnalysis:
             compute = False
 
         if compute:
-            for i in range(len(thicknesses)):
+            for i in list(range(len(thicknesses))):
                 self.x, self.y = xx[i], yy[i]
                 if self.afOptions['AnalysisMethod'] == 'Data' and not bem:
                     import precomp_data
@@ -2606,7 +2607,7 @@ class AirfoilAnalysis:
                 if not all(np.diff(alpha_ext)):
                     to_delete = np.zeros(0)
                     diff = np.diff(alpha_ext)
-                    for z in range(len(alpha_ext)-1):
+                    for z in list(range(len(alpha_ext)-1)):
                         if not diff[z] > 0.0:
                             to_delete = np.append(to_delete, z)
                     alpha_ext = np.delete(alpha_ext, to_delete)
@@ -2619,7 +2620,7 @@ class AirfoilAnalysis:
         cd_correction = np.zeros(len(alphas_set))
         cls_files, cds_files, cms_files, alphass_files, failures_files = [], [], [], [], []
         if computeCorrection:
-            for i in range(len(self.airfoilsSpecified)):
+            for i in list(range(len(self.airfoilsSpecified))):
                 aerodynFile = self.afOptions['PrecomputationalOptions']['BaseAirfoilsData'+str(splineNum)][i]
                 af = Airfoil.initFromAerodynFile(aerodynFile)
                 alpha_ext, Re_ext, cl_ext, cd_ext, cm_ext = af.createDataGrid()
@@ -2628,7 +2629,7 @@ class AirfoilAnalysis:
                 if not all(np.diff(alpha_ext)):
                     to_delete = np.zeros(0)
                     diff = np.diff(alpha_ext)
-                    for z in range(len(alpha_ext)-1):
+                    for z in list(range(len(alpha_ext)-1)):
                         if not diff[z] > 0.0:
                             to_delete = np.append(to_delete, z)
                     alpha_ext = np.delete(alpha_ext, to_delete)
@@ -2644,17 +2645,17 @@ class AirfoilAnalysis:
                 cl_set_files, _, = cl_spline_files.interp(alphas_set)
                 cd_spline_files = Akima(np.radians(alpha_ext), cd_ext, delta_x=0)
                 cd_set_files, _, = cd_spline_files.interp(alphas_set)
-                for k in range(len(alphas_set)):
+                for k in list(range(len(alphas_set))):
                     cl_correction[k] += cl_set_files[k] - cl_set_xfoil[k]
                     cd_correction[k] += cd_set_files[k] - cd_set_xfoil[k]
             cl_correction /= float(len(self.airfoilsSpecified))
             cd_correction /= float(len(self.airfoilsSpecified))
 
-        for i in range(len(thicknesses)):
+        for i in list(range(len(thicknesses))):
             if not all(np.diff(alphass[i])):
                 to_delete = np.zeros(0)
                 diff = np.diff(alphass[i])
-                for z in range(len(alphass[i])-1):
+                for z in list(range(len(alphass[i])-1)):
                     if not diff[z] > 0.0:
                         to_delete = np.append(to_delete, z)
                 alphass[i] = np.delete(alphass[i], to_delete)
@@ -2666,7 +2667,7 @@ class AirfoilAnalysis:
             cl_set, _, _, _ = cl_spline.interp(alphas_set)
             cd_set, _, _, _ = cd_spline.interp(alphas_set)
             # if computeCorrection:
-            #     for w in range(len(cl_set)):
+            #     for w in list(range(len(cl_set))):
             #         cl_set[w] += cl_correction[w]
             #         cd_set[w] += cd_correction[w]
             #         if cd_set[w] < 0.0001:
@@ -2679,7 +2680,7 @@ class AirfoilAnalysis:
                 cl_set, _, _, _ = cl_spline.interp(alphas_set)
                 cd_set, _, _, _ = cd_spline.interp(alphas_set)
 
-            for j in range(len(alphas_set)):
+            for j in list(range(len(alphas_set))):
                 clGrid[j][i] = cl_set[j]
                 cdGrid[j][i] = cd_set[j]
         kx = min(len(alphas_set)-1, 3)
@@ -2706,7 +2707,7 @@ class AirfoilAnalysis:
         """
         yy = np.zeros(len(y))
         base_tc = max(y) - min(y)
-        for i in range(len(y)):
+        for i in list(range(len(y))):
             yy[i] = y[i] * tc / base_tc
         return yy
 
@@ -2743,7 +2744,7 @@ class AirfoilAnalysis:
         if self.af_parameterization == 'Precomputational' and self.generatedPreComp:
             alphas = self.afOptions['SplineOptions']['alphas']
             cl, cd = np.zeros(len(alphas)), np.zeros(len(alphas))
-            for i in range(len(alphas)):
+            for i in list(range(len(alphas))):
                 cl[i], cd[i] = self.evaluatePreCompModel(np.radians(alphas[i]), self.Saf)
             cm, alphas, failure = np.zeros_like(cl), alphas, False
         else:
@@ -2834,13 +2835,13 @@ class AirfoilAnalysis:
         dcd_dRe = [0]*n
         computeAlphaGradient = self.afOptions['GradientOptions']['ComputeGradient']
         computeSafGradient = self.afOptions['GradientOptions']['ComputeAirfoilGradients']
-        for i in range(len(alphas)):
+        for i in list(range(len(alphas))):
             alpha = alphas[i]
             Re = Res[i]
             af = afs[i]
             if af.Saf is not None and abs(np.degrees(alpha)) < af.afOptions['SplineOptions']['maxDirectAoA']:
                 found = False
-                for b in range(len(af.alpha_storage)):
+                for b in list(range(len(af.alpha_storage))):
                     if abs(alpha - af.alpha_storage[b]) < 1e-10:
                     # index = af.alpha_storage.index(alpha)
                         cl[i] = af.cl_storage[b]
@@ -2883,7 +2884,7 @@ class AirfoilAnalysis:
             Safs_to_compute = [afs[i].Saf for i in indices_to_compute]
             if afOptions['GradientOptions']['ComputeGradient']:
                 cls, cds, dcls_dalpha, dcls_dRe, dcds_dalpha, dcds_dRe, dcls_dSaf, dcds_dSaf = self.__cfdDirectParallel(alphas_to_compute, Res_to_compute, Safs_to_compute, afOptions)
-                for j in range(len(indices_to_compute)):
+                for j in list(range(len(indices_to_compute))):
                     dcl_dalpha[indices_to_compute[j]] = dcls_dalpha[j]
                     dcl_dRe[indices_to_compute[j]] = dcls_dRe[j]
                     dcd_dalpha[indices_to_compute[j]] = dcds_dalpha[j]
@@ -2892,11 +2893,11 @@ class AirfoilAnalysis:
                     dcd_dSaf[indices_to_compute[j]] = dcds_dSaf[j]
             else:
                 cls, cds = self.__cfdDirectParallel(alphas_to_compute, Res_to_compute, Safs_to_compute, afOptions)
-            for j in range(len(indices_to_compute)):
+            for j in list(range(len(indices_to_compute))):
                 cl[indices_to_compute[j]] = cls[j]
                 cd[indices_to_compute[j]] = cds[j]
 
-        for i in range(len(alphas)):
+        for i in list(range(len(alphas))):
             if afs[i].Saf is not None and abs(np.degrees(alphas[i])) < afs[i].afOptions['SplineOptions']['maxDirectAoA']:
                 afs[i].alpha_storage.append(alphas[i])
                 afs[i].cl_storage.append(cl[i])
@@ -2946,7 +2947,7 @@ class AirfoilAnalysis:
         airfoil.re, airfoil.mach, airfoil.iter = Re, 0.0, 100
         cl, cd, cm, to_delete = np.zeros(len(alphas)), np.zeros(len(alphas)), np.zeros(len(alphas)), np.zeros(0)
         failure = False
-        for j in range(len(alphas)):
+        for j in list(range(len(alphas))):
             cl[j], cd[j], cm[j], lexitflag = airfoil.solveAlpha(alphas[j])
             if lexitflag:
                 cl[j], cd[j] = -10.0, 0.0
@@ -2954,12 +2955,12 @@ class AirfoilAnalysis:
         # Make sure none of the values are too far outliers
         cl_diff = np.diff(np.asarray(cl))
         cd_diff = np.diff(np.asarray(cd))
-        for zz in range(len(cl_diff)):
+        for zz in list(range(len(cl_diff))):
             if abs(cd_diff[zz]) > 0.02 or abs(cl_diff[zz]) > 0.5:
                 to_delete = np.append(to_delete, zz)
 
         # error handling in case of XFOIL failure
-        for k in range(len(cl)):
+        for k in list(range(len(cl))):
             if cl[k] == -10.0 or cl[k] < -2. or cl[k] > 2. or cd[k] < 0.00001 or cd[k] > 1.0 or not np.isfinite(cd[k]) or not np.isfinite(cl[k]):
                 to_delete = np.append(to_delete, k)
 
@@ -3068,7 +3069,7 @@ class AirfoilAnalysis:
         cs_step = complex(0, step_size)
         dcl_dSaf, dcd_dSaf = np.zeros(nn), np.zeros(nn)
         lexitflag = np.zeros(nn)
-        for i in range(len(wl)):
+        for i in list(range(len(wl))):
             wl_complex = copy.deepcopy(wl.astype(complex))
             wu_complex = copy.deepcopy(wu.astype(complex))
             wl_complex[i] += cs_step
@@ -3112,7 +3113,7 @@ class AirfoilAnalysis:
                     dcl_dSaf[i+nn/2] = (cl_new_fd - cl_cur) / fd_step
                     dcd_dSaf[i+nn/2] = (cd_new_fd - cd_cur) / fd_step
                 #print "derivative CST fail", alpha
-        for i in range(nn):
+        for i in list(range(nn)):
             if lexitflag[i]:
                 from akima import Akima
                 af1 = Airfoil.initFromCST(self.Saf, self.afOptions)
@@ -3232,7 +3233,7 @@ class AirfoilAnalysis:
         if self.afOptions['CFDOptions']['computeAirfoilsInParallel']:
             cl, cd = self.__cfdParallelSpline(np.radians(alphas), Re, self.afOptions)
         else:
-            for j in range(len(alphas)):
+            for j in list(range(len(alphas))):
                 if j == 0:
                     mesh = True
                 else:
@@ -3416,7 +3417,7 @@ class AirfoilAnalysis:
             mpi_Command = ''
         if processes > 0:
             if not mpi_Command:
-                raise RuntimeError , 'could not find an mpi interface'
+                raise RuntimeError('could not find an mpi interface')
         cfd_direct_output = open(basepath + os.path.sep + 'CFD' + os.path.sep + 'cfd_direct_output.txt', 'w')
         print(the_Command)
         sys.stdout.flush()
@@ -3499,7 +3500,7 @@ class AirfoilAnalysis:
         alphas = np.degrees(alphas)
         procTotal = []
         konfigTotal = []
-        for i in range(len(alphas)):
+        for i in list(range(len(alphas))):
             x_vel = Uinf * cos(np.radians(alphas[i]))
             y_vel = Uinf * sin(np.radians(alphas[i]))
             config.FREESTREAM_VELOCITY = '( ' + str(x_vel) + ', ' + str(y_vel) + ', 0.00 )'
@@ -3523,7 +3524,7 @@ class AirfoilAnalysis:
             the_Command = base_Command % the_Command
             if processes > 0:
                 if not mpi_Command:
-                    raise RuntimeError , 'could not find an mpi interface'
+                    raise RuntimeError('could not find an mpi interface')
             the_Command = mpi_Command % (processes,the_Command)
             print(the_Command)
             sys.stdout.flush()
@@ -3536,7 +3537,7 @@ class AirfoilAnalysis:
             procTotal.append(copy.deepcopy(proc))
             konfigTotal.append(copy.deepcopy(konfig))
 
-        for i in range(len(alphas)):
+        for i in list(range(len(alphas))):
             while procTotal[i].poll() is None:
                 pass
             konfig = konfigTotal[i]
@@ -3610,7 +3611,7 @@ class AirfoilAnalysis:
         Re = afOptions['SplineOptions']['Re']
         cores_count = 0
         host_count = 0
-        for i in range(len(alphas)):
+        for i in list(range(len(alphas))):
             meshFileName = basepath + os.path.sep + 'mesh_airfoil'+str(i+1)+'.su2'
             # Create airfoil coordinate file for SU2
             afanalysis = AirfoilAnalysis(Safs[i], afOptions)
@@ -3618,7 +3619,7 @@ class AirfoilAnalysis:
             airfoilFile = basepath + os.path.sep + 'airfoil'+str(i+1)+'_coordinates.dat'
             coord_file = open(airfoilFile, 'w')
             coord_file.write('Airfoil Parallel')
-            for j in range(len(x)):
+            for j in list(range(len(x))):
                 coord_file.write('{:<10f}\t{:<10f}'.format(x[j], y[j]))
             coord_file.close()
 
@@ -3718,7 +3719,7 @@ class AirfoilAnalysis:
             the_Command = base_Command % the_Command
             if processes > 0:
                 if not mpi_Command:
-                    raise RuntimeError , 'could not find an mpi interface'
+                    raise RuntimeError('could not find an mpi interface')
             if slurm_job:
                 the_Command = mpi_Command % (processes, node, the_Command)
             else:
@@ -3737,7 +3738,7 @@ class AirfoilAnalysis:
             konfigTotal.append(copy.deepcopy(konfig))
             ztateTotal.append(copy.deepcopy(state))
 
-        for i in range(len(alphas)):
+        for i in list(range(len(alphas))):
             while procTotal[i].poll() is None:
                 pass
             konfig = konfigDirectTotal[i]
@@ -3768,14 +3769,14 @@ class AirfoilAnalysis:
                 cd_new = np.zeros(len(alphas))
                 alphas_new = np.zeros(len(alphas))
                 fd_step = self.afOptions['GradientOptions']['fd_step']
-                for k in range(len(alphas)):
+                for k in list(range(len(alphas))):
                     alphas_new[k] = alphas[k] + fd_step
                 procTotal = []
                 konfigTotal = []
                 konfigDirectTotal = []
                 ztateTotal = []
                 Re = afOptions['SplineOptions']['Re']
-                for i in range(len(alphas)):
+                for i in list(range(len(alphas))):
                     meshFileName = basepath + os.path.sep + 'mesh_airfoil'+str(i+1)+'.su2'
                     # Create airfoil coordinate file for SU2
                     afanalysis = AirfoilAnalysis(Safs[i], afOptions)
@@ -3783,7 +3784,7 @@ class AirfoilAnalysis:
                     airfoilFile = basepath + os.path.sep + 'airfoil'+str(i+1)+'_coordinates.dat'
                     coord_file = open(airfoilFile, 'w')
                     coord_file.write('Airfoil Parallel')
-                    for j in range(len(x)):
+                    for j in list(range(len(x))):
                         coord_file.write('{:<10f}\t{:<10f}'.format(x[j], y[j]))
                     coord_file.close()
 
@@ -3862,7 +3863,7 @@ class AirfoilAnalysis:
                     the_Command = base_Command % the_Command
                     if processes > 0:
                         if not mpi_Command:
-                            raise RuntimeError , 'could not find an mpi interface'
+                            raise RuntimeError('could not find an mpi interface')
                     the_Command = mpi_Command % (processes,the_Command)
                     sys.stdout.flush()
                     cfd_output = open(basepath + os.path.sep + 'cfd_output_airfoil'+str(i+1)+'.txt', 'w')
@@ -3878,7 +3879,7 @@ class AirfoilAnalysis:
                     konfigTotal.append(copy.deepcopy(konfig))
                     ztateTotal.append(copy.deepcopy(state))
 
-                for i in range(len(alphas)):
+                for i in list(range(len(alphas))):
                     while procTotal[i].poll() is None:
                         pass
                     konfig = konfigDirectTotal[i]
@@ -3901,7 +3902,7 @@ class AirfoilAnalysis:
                 dcl_dalphas, dcd_dalphas = np.zeros(len(cl_new)), np.zeros(len(cd_new))
                 dcl_dRes, dcd_dRes = np.zeros(len(cl_new)), np.zeros(len(cd_new))
                 dcl_dSafs, dcd_dSafs = [], []
-                for w in range(len(cl_new)):
+                for w in list(range(len(cl_new))):
                     dcl_dalphas[w] = (cl_new[w] - cl[w]) / fd_step
                     dcd_dalphas[w] = (cd_new[w] - cd[w]) / fd_step
                     dcl_dSafs.append(np.zeros(8))
@@ -3965,7 +3966,7 @@ class AirfoilAnalysis:
             mpi_Command = ''
         if processes > 0:
             if not mpi_Command:
-                raise RuntimeError , 'could not find an mpi interface'
+                raise RuntimeError('could not find an mpi interface')
         print(the_Command)
         sys.stdout.flush()
         cfd_output = open(basepath + os.path.sep + 'CFD' + os.path.sep + 'cfd_output_airfoil_'+ objective +'.txt', 'w')
@@ -4016,7 +4017,7 @@ class AirfoilAnalysis:
             konfig.DEFINITION_DV['SIZE'] = [0]*8
             ww = [0, 0, 0, 0, 1, 1, 1, 1]
             www = [0.0, 1.0, 2.0, 3.0, 0.0, 1.0, 2.0, 3.0]
-            for w in range(8):
+            for w in list(range(8)):
                 konfig.DEFINITION_DV['KIND'][w] = 'CST'
                 konfig.DEFINITION_DV['MARKER'][w] = ['airfoil']
                 konfig.DEFINITION_DV['PARAM'][w] = [ww[w], www[w]]
@@ -4080,7 +4081,7 @@ class AirfoilAnalysis:
         cores_count = 0
         remainder = self.afOptions['CFDOptions']['processors'] % len(konfigTotal)
 
-        for i in range(len(konfigTotal)):
+        for i in list(range(len(konfigTotal))):
             konfig = copy.deepcopy(konfigTotal[i])
             ztate = ztateTotal[i]
             konfig.RESTART_SOL = 'NO'
@@ -4145,7 +4146,7 @@ class AirfoilAnalysis:
             the_Command = base_Command % the_Command
             if processes > 0:
                 if not mpi_Command:
-                    raise RuntimeError , 'could not find an mpi interface'
+                    raise RuntimeError('could not find an mpi interface')
             if slurm_job:
                 the_Command = mpi_Command % (processes, node, the_Command)
             else:
@@ -4166,7 +4167,7 @@ class AirfoilAnalysis:
             konfigFTotal.append(copy.deepcopy(konfig))
             # ztateTotal.append(copy.deepcopy(state))
 
-        for i in range(len(konfigTotal)):
+        for i in list(range(len(konfigTotal))):
             while procTotal[i].poll() is None:
                 pass
             konfig = konfigFTotal[i]
@@ -4208,7 +4209,7 @@ class AirfoilAnalysis:
                 konfig.DEFINITION_DV['SIZE'] = [0]*8
                 ww = [0, 0, 0, 0, 1, 1, 1, 1]
                 www = [0.0, 1.0, 2.0, 3.0, 0.0, 1.0, 2.0, 3.0]
-                for w in range(8):
+                for w in list(range(8)):
                     konfig.DEFINITION_DV['KIND'][w] = 'CST'
                     konfig.DEFINITION_DV['MARKER'][w] = ['airfoil']
                     konfig.DEFINITION_DV['PARAM'][w] = [ww[w], www[w]]
@@ -4277,7 +4278,7 @@ class AirfoilAnalysis:
         dx = data[:, 8][1:N+1].reshape(N,1)
         dy = data[:, 9][1:N+1].reshape(N,1)
         xu, xl, yu, yl, dobj_dxl, dobj_dxu = np.zeros(0), np.zeros(0), np.zeros(0), np.zeros(0),  np.zeros(0), np.zeros(0) #TODO: Initalize
-        for i in range(N):
+        for i in list(range(N)):
             index = np.where(point_ids == loop_sorted[i])[0][0]
             if i < N/2:
                 xl = np.append(xl, x[index])
@@ -4306,12 +4307,12 @@ class AirfoilAnalysis:
         all_nodes = []
         nodes = os.environ.get('SLURM_TASKS_PER_NODE')
         nodes_per_host = nodes.split(',')
-        for i in range(len(nodes_per_host)):
+        for i in list(range(len(nodes_per_host))):
             section1 = nodes_per_host[i].split('x')
             if len(section1) > 1:
                 section2 = section1[0][:-1]
                 section3 = section1[1][:-1]
-                for zz in range(int(section3)):
+                for zz in list(range(int(section3))):
                     all_nodes.append(int(section2))
             else:
                 all_nodes.append(int(section1[0]))
@@ -4365,7 +4366,7 @@ class AirfoilAnalysis:
         """
         Emulate Matlab linspace
         """
-        return [start+(stop-start)*i/(np-1) for i in range(np)]
+        return [start+(stop-start)*i/(np-1) for i in list(range(np))]
 
     def __interpolate(self, xa,ya,queryPoints):
         """
@@ -4383,7 +4384,7 @@ class AirfoilAnalysis:
         n = len(xa)
         u, y2 = [0]*n, [0]*n
 
-        for i in range(1,n-1):
+        for i in list(range(1,n-1)):
 
             # This is the decomposition loop of the tridiagonal algorithm.
             # y2 and u are used for temporary storage of the decomposed factors.
@@ -4403,7 +4404,7 @@ class AirfoilAnalysis:
 
         # This is the backsubstitution loop of the tridiagonal algorithm
         #((int i = n - 2; i >= 0; --i):
-        for i in range(n-2,-1,-1):
+        for i in list(range(n-2,-1,-1)):
             y2[i] = y2[i] * y2[i + 1] + u[i]
 
         # interpolate() adapted from Paint Mono which in turn adapted:
@@ -4414,7 +4415,7 @@ class AirfoilAnalysis:
         results = [0]*n
 
         #loop over all query points
-        for i in range(len(queryPoints)):
+        for i in list(range(len(queryPoints))):
             # bisection. This is optimal if sequential calls to this
             # routine are at random values of x. If sequential calls
             # are in order, and closely spaced, one would do better
@@ -4489,11 +4490,11 @@ class AirfoilAnalysis:
 
             theta = [atan(xx) for xx in dyc_dx]
 
-            xu = [xx - yy * sin(zz) for xx,yy,zz in zip(x,yt,theta)]
-            yu = [xx + yy * cos(zz) for xx,yy,zz in zip(zc,yt,theta)]
+            xu = [xx - yy * sin(zz) for xx,yy,zz in list(zip(x,yt,theta))]
+            yu = [xx + yy * cos(zz) for xx,yy,zz in list(zip(zc,yt,theta))]
 
-            xl = [xx + yy * sin(zz) for xx,yy,zz in zip(x,yt,theta)]
-            yl = [xx - yy * cos(zz) for xx,yy,zz in zip(zc,yt,theta)]
+            xl = [xx + yy * sin(zz) for xx,yy,zz in list(zip(x,yt,theta))]
+            yl = [xx - yy * cos(zz) for xx,yy,zz in list(zip(zc,yt,theta))]
 
         X = xu[::-1] + xl[1:]
         Z = yu[::-1] + yl[1:]
@@ -4561,11 +4562,11 @@ class AirfoilAnalysis:
             dyc_dx = dyc1_dx + dyc2_dx
             theta = [atan(xx) for xx in dyc_dx]
 
-            xu = [xx - yy * sin(zz) for xx,yy,zz in zip(x,yt,theta)]
-            yu = [xx + yy * cos(zz) for xx,yy,zz in zip(zc,yt,theta)]
+            xu = [xx - yy * sin(zz) for xx,yy,zz in list(zip(x,yt,theta))]
+            yu = [xx + yy * cos(zz) for xx,yy,zz in list(zip(zc,yt,theta))]
 
-            xl = [xx + yy * sin(zz) for xx,yy,zz in zip(x,yt,theta)]
-            yl = [xx - yy * cos(zz) for xx,yy,zz in zip(zc,yt,theta)]
+            xl = [xx + yy * sin(zz) for xx,yy,zz in list(zip(x,yt,theta))]
+            yl = [xx - yy * cos(zz) for xx,yy,zz in list(zip(zc,yt,theta))]
 
 
         X = xu[::-1] + xl[1:]
@@ -4586,7 +4587,7 @@ def evaluate_direct_parallel2(alphas, Res, afs, computeAlphaGradient=False, comp
         dcl_dRe = [0]*n
         dcd_dRe = [0]*n
 
-        for i in range(len(alphas)):
+        for i in list(range(len(alphas))):
             alpha = alphas[i]
             Re = Res[i]
             af = afs[i]
@@ -4632,7 +4633,7 @@ def evaluate_direct_parallel2(alphas, Res, afs, computeAlphaGradient=False, comp
             Safs_to_compute = [afs[i].Saf for i in indices_to_compute]
             if airfoilOptions['ComputeGradient']:
                 cls, cds, dcls_dalpha, dcls_dRe, dcds_dalpha, dcds_dRe, dcls_dSaf, dcds_dSaf = cfdAirfoilsSolveParallel(alphas_to_compute, Res_to_compute, Safs_to_compute, airfoilOptions)
-                for j in range(len(indices_to_compute)):
+                for j in list(range(len(indices_to_compute))):
                     dcl_dalpha[indices_to_compute[j]] = dcls_dalpha[j]
                     dcl_dRe[indices_to_compute[j]] = dcls_dRe[j]
                     dcd_dalpha[indices_to_compute[j]] = dcds_dalpha[j]
@@ -4642,7 +4643,7 @@ def evaluate_direct_parallel2(alphas, Res, afs, computeAlphaGradient=False, comp
 
             else:
                 cls, cds = cfdAirfoilsSolveParallel(alphas_to_compute, Res_to_compute, Safs_to_compute, airfoilOptions)
-            for j in range(len(indices_to_compute)):
+            for j in list(range(len(indices_to_compute))):
                 cl[indices_to_compute[j]] = cls[j]
                 cd[indices_to_compute[j]] = cds[j]
 
@@ -4705,7 +4706,7 @@ if __name__ == '__main__':
 
         if args.plot:
 
-            for p, p3D in zip(af.polars, af3D.polars):
+            for p, p3D in list(zip(af.polars, af3D.polars)):
                 # plt.figure(figsize=(6.0, 2.6))
                 # plt.subplot(121)
                 plt.figure()
@@ -4746,7 +4747,7 @@ if __name__ == '__main__':
 
         if args.plot:
 
-            for p, pext in zip(af.polars, afext.polars):
+            for p, pext in list(zip(af.polars, afext.polars)):
                 # plt.figure(figsize=(6.0, 2.6))
                 # plt.subplot(121)
                 plt.figure()
