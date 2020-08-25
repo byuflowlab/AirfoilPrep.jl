@@ -1200,7 +1200,7 @@ class AirfoilAnalysis:
                 else:
                     afFile.write('{:<20f}\t{:<20f}'.format(self.x[i], self.y[i]) + '\n')
         else:
-            for i in list(range(len(x)):
+            for i in list(range(len(x))):
                 if complex:
                     afFile.write('{:<20f}\t{:<20f}'.format(complex(np.real(x[i]), np.imag(x[i])), complex(np.real(y[i]), np.imag(y[i]))) + '\n')
                 else:
