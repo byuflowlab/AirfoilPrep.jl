@@ -106,14 +106,17 @@ end
 "Reads a polar as downloaded from Airfoiltools.com"
 function read_polar(file_name::String; path::String="", optargs...)
     header = ["Alpha","Cl","Cd","Cdp","Cm","Top_Xtr","Bot_Xtr"]
-    data = CSV.read(joinpath(path,file_name), datarow=12, header=header)
+    data = DataFrames.DataFrame!(CSV.File(joinpath(path,file_name), datarow=12, header=header))
+    if data[:,1] = []
+        error("Unusable data file. Possibly insufficient data in $file_name.  Data must start on row 12 (XFoil polar output formatting is assumed).")
+    end
     polar = Polar(-1, data[:,1], data[:,2], data[:,3], data[:,5]; optargs...)
     return polar
 end
 "Reads a polar as saved from a Polar object"
 function read_polar2(file_name::String; path::String="", optargs...)
     header = ["Alpha","Cl","Cd","Cm"]
-    data = CSV.read(joinpath(path,file_name), datarow=2, header=header)
+    data = DataFrames.DataFrame!(CSV.File(joinpath(path,file_name), datarow=2, header=header))
     polar = Polar(-1, data[:,1], data[:,2], data[:,3], data[:,4]; optargs...)
     return polar
 end
@@ -182,7 +185,7 @@ function correction3D(self::Polar, r_over_R::Float64, chord_over_r::Float64,
                   alpha_max_corr=alpha_max_corr)
 
     new_polar = _pyPolar2Polar(new_pyPolar; _get_nonpypolar_args(self)...)
-    
+
     return new_polar
 end
 
@@ -222,12 +225,12 @@ Extrapolates force coefficients up to +/- 180 degrees using Viterna's method
 """
 function extrapolate(self::Polar, cdmax::Float64; AR=nothing, cdmin=0.001,
                       nalpha=15)
-    
+
     new_pyPolar = self.pyPolar.extrapolate(cdmax, AR=AR, cdmin=cdmin,
                                               nalpha=nalpha)
-    
+
     new_polar = _pyPolar2Polar(new_pyPolar; _get_nonpypolar_args(self)...)
-    
+
     return new_polar
 end
 
@@ -323,7 +326,7 @@ function compare(polar1::Polar, polar2::Polar; verbose::Bool=false)
             push!(this_splines, this_spline)
         end
         splines[polar] = this_splines
-    end 
+    end
 
     for (i, curve) in enumerate(curves)
         f1(x) = splines[polar1][i](x)
@@ -395,7 +398,7 @@ end
 
 "Return arguments unrelated to airfoilpreppy"
 function _get_nonpypolar_args(polar::Polar)
-    
+
     ma = get_Ma(polar)
     npanels = get_npanels(polar)
     ncrit = get_ncrit(polar)

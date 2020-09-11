@@ -14,7 +14,7 @@ using Roots
 using LaTeXStrings
 using Statistics: mean
 import CSV
-
+import DataFrames
 
 # ------------ FLOW CODES ------------------------------------------------------
 # Xfoil from https://github.com/byuflowlab/Xfoil.jl
