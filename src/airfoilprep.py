@@ -82,7 +82,6 @@ class Polar(object):
 
         # generate merged set of angles of attack - get unique values
         alpha = np.union1d(self.alpha, other.alpha)
-
         # truncate (TODO: could also have option to just use one of the polars for values out of range)
         min_alpha = max(self.alpha.min(), other.alpha.min())
         max_alpha = min(self.alpha.max(), other.alpha.max())
@@ -138,50 +137,52 @@ class Polar(object):
 
 
         """
-
-        # rename and convert units for convenience
-        alpha = np.radians(self.alpha)
-        cl_2d = self.cl
-        cd_2d = self.cd
-        alpha_max_corr = radians(alpha_max_corr)
-        alpha_linear_min = radians(alpha_linear_min)
-        alpha_linear_max = radians(alpha_linear_max)
-
-        # parameters in Du-Selig model
-        a = 1
-        b = 1
-        d = 1
-        if tsr==None:
-            lam = 1
+        if all(elem == self.cd[0] for elem in self.cd):
+            return type(self)(self.Re, self.alpha, self.cl, self.cd, self.cm)
         else:
-            lam = tsr/(1+tsr**2)**0.5  # modified tip speed ratio
-        expon = d/lam/r_over_R
+            # rename and convert units for convenience
+            alpha = np.radians(self.alpha)
+            cl_2d = self.cl
+            cd_2d = self.cd
+            alpha_max_corr = radians(alpha_max_corr)
+            alpha_linear_min = radians(alpha_linear_min)
+            alpha_linear_max = radians(alpha_linear_max)
 
-        # find linear region
-        idx = np.logical_and(alpha >= alpha_linear_min,
-                             alpha <= alpha_linear_max)
-        p = np.polyfit(alpha[idx], cl_2d[idx], 1)
-        m = p[0]
-        alpha0 = -p[1]/m
+            # parameters in Du-Selig model
+            a = 1
+            b = 1
+            d = 1
+            if tsr==None:
+                lam = 1
+            else:
+                lam = tsr/(1+tsr**2)**0.5  # modified tip speed ratio
+            expon = d/lam/r_over_R
 
-        # correction factor
-        fcl = 1.0/m*(1.6*chord_over_r/0.1267*(a-chord_over_r**expon)/(b+chord_over_r**expon)-1)
+            # find linear region
+            idx = np.logical_and(alpha >= alpha_linear_min,
+                                alpha <= alpha_linear_max)
+            p = np.polyfit(alpha[idx], cl_2d[idx], 1)
+            m = p[0]
+            alpha0 = -p[1]/m
 
-        # not sure where this adjustment comes from (besides AirfoilPrep spreadsheet of course)
-        adj = ((pi/2-alpha)/(pi/2-alpha_max_corr))**2
-        adj[alpha <= alpha_max_corr] = 1.0
+            # correction factor
+            fcl = 1.0/m*(1.6*chord_over_r/0.1267*(a-chord_over_r**expon)/(b+chord_over_r**expon)-1)
 
-        # Du-Selig correction for lift
-        cl_linear = m*(alpha-alpha0)
-        cl_3d = cl_2d + fcl*(cl_linear-cl_2d)*adj
+            # not sure where this adjustment comes from (besides AirfoilPrep spreadsheet of course)
+            adj = ((pi/2-alpha)/(pi/2-alpha_max_corr))**2
+            adj[alpha <= alpha_max_corr] = 1.0
 
-        # Eggers 2003 correction for drag
-        delta_cl = cl_3d-cl_2d
+            # Du-Selig correction for lift
+            cl_linear = m*(alpha-alpha0)
+            cl_3d = cl_2d + fcl*(cl_linear-cl_2d)*adj
 
-        delta_cd = delta_cl*(np.sin(alpha) - 0.12*np.cos(alpha))/(np.cos(alpha) + 0.12*np.sin(alpha))
-        cd_3d = cd_2d + delta_cd
+            # Eggers 2003 correction for drag
+            delta_cl = cl_3d-cl_2d
 
-        return type(self)(self.Re, np.degrees(alpha), cl_3d, cd_3d, self.cm)
+            delta_cd = delta_cl*(np.sin(alpha) - 0.12*np.cos(alpha))/(np.cos(alpha) + 0.12*np.sin(alpha))
+            cd_3d = cd_2d + delta_cd
+
+            return type(self)(self.Re, np.degrees(alpha), cl_3d, cd_3d, self.cm)
 
 
 
@@ -217,120 +218,126 @@ class Polar(object):
         cdmax = 1.11 + 0.018*AR
 
         """
-
-        if cdmin < 0:
-            raise Exception('cdmin cannot be < 0')
-
-        # lift coefficient adjustment to account for assymetry
-        cl_adj = 0.7
-
-        # estimate CD max
-        if AR is not None:
-            cdmax = 1.11 + 0.018*AR
-        self.cdmax = max(max(self.cd), cdmax)
-
-        # extract matching info from ends
-        alpha_high = radians(self.alpha[-1])
-        cl_high = self.cl[-1]
-        cd_high = self.cd[-1]
-        cm_high = self.cm[-1]
-
-        alpha_low = radians(self.alpha[0])
-        cl_low = self.cl[0]
-        cd_low = self.cd[0]
-
-        if alpha_high > pi/2:
-            raise Exception('alpha[-1] > pi/2')
-            return self
-        if alpha_low < -pi/2:
-            raise Exception('alpha[0] < -pi/2')
-            return self
-
-        # parameters used in model
-        sa = sin(alpha_high)
-        ca = cos(alpha_high)
-        self.A = (cl_high - self.cdmax*sa*ca)*sa/ca**2
-        self.B = (cd_high - self.cdmax*sa*sa)/ca
-
-        # alpha_high <-> 90
-        alpha1 = np.linspace(alpha_high, pi/2, nalpha)
-        alpha1 = alpha1[1:]  # remove first element so as not to duplicate when concatenating
-        cl1, cd1 = self.__Viterna(alpha1, 1.0)
-
-        # 90 <-> 180-alpha_high
-        alpha2 = np.linspace(pi/2, pi-alpha_high, nalpha)
-        alpha2 = alpha2[1:]
-        cl2, cd2 = self.__Viterna(pi-alpha2, -cl_adj)
-
-        # 180-alpha_high <-> 180
-        alpha3 = np.linspace(pi-alpha_high, pi, nalpha)
-        alpha3 = alpha3[1:]
-        cl3, cd3 = self.__Viterna(pi-alpha3, 1.0)
-        cl3 = (alpha3-pi)/alpha_high*cl_high*cl_adj  # override with linear variation
-
-        if alpha_low <= -alpha_high:
-            alpha4 = []
-            cl4 = []
-            cd4 = []
-            alpha5max = alpha_low
+        if all(elem == self.cd[0] for elem in self.cd):
+            alpha = np.linspace(-pi, pi, 8*nalpha)
+            cd = np.ones(8*nalpha,)*self.cd[0]
+            cl = np.ones(8*nalpha,)*self.cl[0]
+            cm = np.ones(8*nalpha,)*self.cm[0]
+            return type(self)(self.Re, np.degrees(alpha), cl, cd, cm)
         else:
-            # -alpha_high <-> alpha_low
-            # Note: this is done slightly differently than AirfoilPrep for better continuity
-            alpha4 = np.linspace(-alpha_high, alpha_low, nalpha)
-            alpha4 = alpha4[1:-2]  # also remove last element for concatenation for this case
-            cl4 = -cl_high*cl_adj + (alpha4+alpha_high)/(alpha_low+alpha_high)*(cl_low+cl_high*cl_adj)
-            cd4 = cd_low + (alpha4-alpha_low)/(-alpha_high-alpha_low)*(cd_high-cd_low)
-            alpha5max = -alpha_high
+            if cdmin < 0:
+                raise Exception('cdmin cannot be < 0')
 
-        # -90 <-> -alpha_high
-        alpha5 = np.linspace(-pi/2, alpha5max, nalpha)
-        alpha5 = alpha5[1:]
-        cl5, cd5 = self.__Viterna(-alpha5, -cl_adj)
+            # lift coefficient adjustment to account for assymetry
+            cl_adj = 0.7
 
-        # -180+alpha_high <-> -90
-        alpha6 = np.linspace(-pi+alpha_high, -pi/2, nalpha)
-        alpha6 = alpha6[1:]
-        cl6, cd6 = self.__Viterna(alpha6+pi, cl_adj)
+            # estimate CD max
+            if AR is not None:
+                cdmax = 1.11 + 0.018*AR
+            self.cdmax = max(max(self.cd), cdmax)
 
-        # -180 <-> -180 + alpha_high
-        alpha7 = np.linspace(-pi, -pi+alpha_high, nalpha)
-        cl7, cd7 = self.__Viterna(alpha7+pi, 1.0)
-        cl7 = (alpha7+pi)/alpha_high*cl_high*cl_adj  # linear variation
+            # extract matching info from ends
+            alpha_high = radians(self.alpha[-1])
+            cl_high = self.cl[-1]
+            cd_high = self.cd[-1]
+            cm_high = self.cm[-1]
 
-        alpha = np.concatenate((alpha7, alpha6, alpha5, alpha4, np.radians(self.alpha), alpha1, alpha2, alpha3))
-        cl = np.concatenate((cl7, cl6, cl5, cl4, self.cl, cl1, cl2, cl3))
-        cd = np.concatenate((cd7, cd6, cd5, cd4, self.cd, cd1, cd2, cd3))
+            alpha_low = radians(self.alpha[0])
+            cl_low = self.cl[0]
+            cd_low = self.cd[0]
 
-        cd = np.maximum(cd, cdmin)  # don't allow negative drag coefficients
+            if alpha_high > pi/2:
+                raise Exception('alpha[-1] > pi/2')
+                return self
+            if alpha_low < -pi/2:
+                raise Exception('alpha[0] < -pi/2')
+                return self
+
+            # parameters used in model
+            sa = sin(alpha_high)
+            ca = cos(alpha_high)
+            self.A = (cl_high - self.cdmax*sa*ca)*sa/ca**2
+            self.B = (cd_high - self.cdmax*sa*sa)/ca
+
+            # alpha_high <-> 90
+            alpha1 = np.linspace(alpha_high, pi/2, nalpha)
+            alpha1 = alpha1[1:]  # remove first element so as not to duplicate when concatenating
+            cl1, cd1 = self.__Viterna(alpha1, 1.0)
+
+            # 90 <-> 180-alpha_high
+            alpha2 = np.linspace(pi/2, pi-alpha_high, nalpha)
+            alpha2 = alpha2[1:]
+            cl2, cd2 = self.__Viterna(pi-alpha2, -cl_adj)
+
+            # 180-alpha_high <-> 180
+            alpha3 = np.linspace(pi-alpha_high, pi, nalpha)
+            alpha3 = alpha3[1:]
+            cl3, cd3 = self.__Viterna(pi-alpha3, 1.0)
+            cl3 = (alpha3-pi)/alpha_high*cl_high*cl_adj  # override with linear variation
+
+            if alpha_low <= -alpha_high:
+                alpha4 = []
+                cl4 = []
+                cd4 = []
+                alpha5max = alpha_low
+            else:
+                # -alpha_high <-> alpha_low
+                # Note: this is done slightly differently than AirfoilPrep for better continuity
+                alpha4 = np.linspace(-alpha_high, alpha_low, nalpha)
+                alpha4 = alpha4[1:-2]  # also remove last element for concatenation for this case
+                cl4 = -cl_high*cl_adj + (alpha4+alpha_high)/(alpha_low+alpha_high)*(cl_low+cl_high*cl_adj)
+                cd4 = cd_low + (alpha4-alpha_low)/(-alpha_high-alpha_low)*(cd_high-cd_low)
+                alpha5max = -alpha_high
+
+            # -90 <-> -alpha_high
+            alpha5 = np.linspace(-pi/2, alpha5max, nalpha)
+            alpha5 = alpha5[1:]
+            cl5, cd5 = self.__Viterna(-alpha5, -cl_adj)
+
+            # -180+alpha_high <-> -90
+            alpha6 = np.linspace(-pi+alpha_high, -pi/2, nalpha)
+            alpha6 = alpha6[1:]
+            cl6, cd6 = self.__Viterna(alpha6+pi, cl_adj)
+
+            # -180 <-> -180 + alpha_high
+            alpha7 = np.linspace(-pi, -pi+alpha_high, nalpha)
+            cl7, cd7 = self.__Viterna(alpha7+pi, 1.0)
+            cl7 = (alpha7+pi)/alpha_high*cl_high*cl_adj  # linear variation
+
+            alpha = np.concatenate((alpha7, alpha6, alpha5, alpha4, np.radians(self.alpha), alpha1, alpha2, alpha3))
+            cl = np.concatenate((cl7, cl6, cl5, cl4, self.cl, cl1, cl2, cl3))
+            cd = np.concatenate((cd7, cd6, cd5, cd4, self.cd, cd1, cd2, cd3))
+
+            cd = np.maximum(cd, cdmin)  # don't allow negative drag coefficients
 
 
-        # Setup alpha and cm to be used in extrapolation
-        cm1_alpha = floor(self.alpha[0] / 10.0) * 10.0
-        cm2_alpha = ceil(self.alpha[-1] / 10.0) * 10.0
-        alpha_num = abs(int((-180.0-cm1_alpha)/10.0 - 1))
-        alpha_cm1 = np.linspace(-180.0, cm1_alpha, alpha_num)
-        alpha_cm2 = np.linspace(cm2_alpha, 180.0, int((180.0-cm2_alpha)/10.0 + 1))
-        alpha_cm = np.concatenate((alpha_cm1, self.alpha, alpha_cm2))  # Specific alpha values are needed for cm function to work
-        cm1 = np.zeros(len(alpha_cm1))
-        cm2 = np.zeros(len(alpha_cm2))
-        cm_ext = np.concatenate((cm1, self.cm, cm2))
-        if np.count_nonzero(self.cm) > 0:
-            cmCoef = self.__CMCoeff(cl_high, cd_high, cm_high)  # get cm coefficient
-            cl_cm = np.interp(alpha_cm, np.degrees(alpha), cl)  # get cl for applicable alphas
-            cd_cm = np.interp(alpha_cm, np.degrees(alpha), cd)  # get cd for applicable alphas
-            alpha_low_deg = self.alpha[0]
-            alpha_high_deg = self.alpha[-1]
-            for i in list(range(len(alpha_cm))):
-                cm_new = self.__getCM(i, cmCoef, alpha_cm, cl_cm, cd_cm, alpha_low_deg, alpha_high_deg)
-                if cm_new is None:
-                    pass  # For when it reaches the range of cm's that the user provides
-                else:
-                    cm_ext[i] = cm_new
-        try:
-            cm = np.interp(np.degrees(alpha), alpha_cm, cm_ext)
-        except:
-            cm = np.zeros(len(cl))
-        return type(self)(self.Re, np.degrees(alpha), cl, cd, cm)
+            # Setup alpha and cm to be used in extrapolation
+            cm1_alpha = floor(self.alpha[0] / 10.0) * 10.0
+            cm2_alpha = ceil(self.alpha[-1] / 10.0) * 10.0
+            alpha_num = abs(int((-180.0-cm1_alpha)/10.0 - 1))
+            alpha_cm1 = np.linspace(-180.0, cm1_alpha, alpha_num)
+            alpha_cm2 = np.linspace(cm2_alpha, 180.0, int((180.0-cm2_alpha)/10.0 + 1))
+            alpha_cm = np.concatenate((alpha_cm1, self.alpha, alpha_cm2))  # Specific alpha values are needed for cm function to work
+            cm1 = np.zeros(len(alpha_cm1))
+            cm2 = np.zeros(len(alpha_cm2))
+            cm_ext = np.concatenate((cm1, self.cm, cm2))
+            if np.count_nonzero(self.cm) > 0:
+                cmCoef = self.__CMCoeff(cl_high, cd_high, cm_high)  # get cm coefficient
+                cl_cm = np.interp(alpha_cm, np.degrees(alpha), cl)  # get cl for applicable alphas
+                cd_cm = np.interp(alpha_cm, np.degrees(alpha), cd)  # get cd for applicable alphas
+                alpha_low_deg = self.alpha[0]
+                alpha_high_deg = self.alpha[-1]
+                for i in list(range(len(alpha_cm))):
+                    cm_new = self.__getCM(i, cmCoef, alpha_cm, cl_cm, cd_cm, alpha_low_deg, alpha_high_deg)
+                    if cm_new is None:
+                        pass  # For when it reaches the range of cm's that the user provides
+                    else:
+                        cm_ext[i] = cm_new
+            try:
+                cm = np.interp(np.degrees(alpha), alpha_cm, cm_ext)
+            except:
+                cm = np.zeros(len(cl))
+            return type(self)(self.Re, np.degrees(alpha), cl, cd, cm)
 
 
 
