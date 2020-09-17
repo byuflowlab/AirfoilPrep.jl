@@ -107,7 +107,7 @@ end
 function read_polar(file_name::String; path::String="", optargs...)
     header = ["Alpha","Cl","Cd","Cdp","Cm","Top_Xtr","Bot_Xtr"]
     data = DataFrames.DataFrame!(CSV.File(joinpath(path,file_name), datarow=12, header=header))
-    if data[:,1] = []
+    if data[:,1] == []
         error("Unusable data file. Possibly insufficient data in $file_name.  Data must start on row 12 (XFoil polar output formatting is assumed).")
     end
     polar = Polar(-1, data[:,1], data[:,2], data[:,3], data[:,5]; optargs...)
