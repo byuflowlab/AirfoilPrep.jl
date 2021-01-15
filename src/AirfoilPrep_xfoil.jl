@@ -29,7 +29,7 @@ function runXFOIL(xs, ys, Re; alphas=range(-10, stop=25, step=0.5), Mach=0.0,
     cls, cds, cdps, cms, convs = Xfoil.alpha_sweep(xs, ys, alphas, Re; iter=iter,
                                                     npan=npanels, mach=Mach,
                                                     ncrit=ncrit,
-                                                    xsep=xseps,
+                                                    # xsep=xseps,
                                                     printdata=verbose,
                                                     optargs...)
 
