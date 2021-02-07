@@ -269,14 +269,14 @@ function plot(self::Polar; geometry::Bool=true, label="", style=".-",
 
         if this_plot=="Cl"
             if title_str=="automatic"; title("Lift curve at Re=$(self.pyPolar.Re)"); end;
-            PyPlot.plot(alpha, cl, style, label=label; polar_optargs...)
+            plot(alpha, cl, style, label=label; polar_optargs...)
             xlabel(L"Angle of attack $\alpha (^\circ)$")
             ylabel(L"C_l")
             grid(true, color="0.8", linestyle="--")
 
         elseif this_plot=="Cd"
             if title_str=="automatic"; title("Drag polar at Re=$(self.pyPolar.Re)"); end;
-            PyPlot.plot( cdpolar ? cl : alpha, cd, style, label=label; polar_optargs...)
+            plot( cdpolar ? cl : alpha, cd, style, label=label; polar_optargs...)
             if cdpolar
               xlabel(L"C_l")
             else
@@ -287,7 +287,7 @@ function plot(self::Polar; geometry::Bool=true, label="", style=".-",
 
         elseif this_plot=="Cm"
             if title_str=="automatic"; title("Moment curve at Re=$(self.pyPolar.Re)"); end;
-            PyPlot.plot(alpha, cm, style, label=label; polar_optargs...)
+            plot(alpha, cm, style, label=label; polar_optargs...)
             xlabel(L"Angle of attack $\alpha (^\circ)$")
             ylabel(L"C_m")
             grid(true, color="0.8", linestyle="--")

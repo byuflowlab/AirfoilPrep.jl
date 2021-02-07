@@ -56,7 +56,7 @@ function plot_airfoil(x::Array{Float64,1}, y::Array{Float64,1};
   xlim([xmin, xmax])
   ylim([ymin, ymax])
 
-  PyPlot.plot(x,y, style, label=label, alpha=alpha)
+  plot(x,y, style, label=label, alpha=alpha)
   xlabel("x")
   ylabel("y")
   grid(true, color="0.8", linestyle="--")
