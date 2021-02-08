@@ -52,15 +52,16 @@ function plot_airfoil(x::Array{Float64,1}, y::Array{Float64,1};
   xmin, xmax = -0.05, 1.05
   yrange = (xmax-xmin)/figsize[1] * figsize[2]
   ymin, ymax = -yrange/2, yrange/2
-  fig1 = figure(fig_id, figsize=(figsize[1], figsize[2]))
-  xlim([xmin, xmax])
-  ylim([ymin, ymax])
+  fig = figure(fig_id, figsize=(figsize[1], figsize[2]))
+  ax = gca()
+  ax.set_xlim([xmin, xmax])
+  ax.set_ylim([ymin, ymax])
 
-  plot(x,y, style, label=label, alpha=alpha)
-  xlabel("x")
-  ylabel("y")
-  grid(true, color="0.8", linestyle="--")
-  title(title_str)
+  ax.plot(x,y, style, label=label, alpha=alpha)
+  ax.set_xlabel("x")
+  ax.set_ylabel("y")
+  ax.grid(true, color="0.8", linestyle="--")
+  ax.title.set_text(title_str)
 
   # if label!=""; legend(loc="best"); end;
 end

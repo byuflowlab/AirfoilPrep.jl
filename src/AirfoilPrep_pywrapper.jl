@@ -242,7 +242,8 @@ function plot(self::Polar; geometry::Bool=true, label="", style=".-",
                               figsize=[7, 5], rfl_figfactor=2/3,
                               title_str="automatic", polar_optargs=[],
                               legend_optargs=[(:loc, "best")],
-                              to_plot=["Cl", "Cd", "Cm"])
+                              to_plot=["Cl", "Cd", "Cm"],
+                              fig=nothing, axs=nothing)
 
     # Geometry
     if geometry
@@ -250,50 +251,50 @@ function plot(self::Polar; geometry::Bool=true, label="", style=".-",
         plot_airfoil(x, y; label=label, style=rfl_style, figfactor=rfl_figfactor, fig_id=fig_id*"_rfl")
     end
 
-    fig2 = figure(fig_id, figsize=figsize.*[length(to_plot), 1])
+    _fig = fig!=nothing ? fig : figure(fig_id, figsize=figsize.*[length(to_plot), 1])
+    _axs = axs!=nothing ? axs : _fig.subplots(1, length(to_plot))
 
     alpha, cl = get_cl(self)
     _, cd = get_cd(self)
     _, cm = get_cm(self)
 
     if title_str !== "automatic"
-        suptitle(title_str)
+        _fig.suptitle(title_str)
     end
 
     ttl = title_str=="automatic" ? "$(self.pyPolar.Re)" : title_str
-    dims = 100 + 10*length(to_plot)
 
     for (pi, this_plot) in enumerate(to_plot)
 
-        subplot(dims + pi)
+        ax = _axs[pi]
 
         if this_plot=="Cl"
-            if title_str=="automatic"; title("Lift curve at Re=$(self.pyPolar.Re)"); end;
-            plot(alpha, cl, style, label=label; polar_optargs...)
-            xlabel(L"Angle of attack $\alpha (^\circ)$")
-            ylabel(L"C_l")
-            grid(true, color="0.8", linestyle="--")
+            if title_str=="automatic"; ax.title.set_text("Lift curve at Re=$(self.pyPolar.Re)"); end;
+            ax.plot(alpha, cl, style, label=label; polar_optargs...)
+            ax.set_xlabel(L"Angle of attack $\alpha (^\circ)$")
+            ax.set_ylabel(L"C_l")
+            ax.grid(true, color="0.8", linestyle="--")
 
         elseif this_plot=="Cd"
-            if title_str=="automatic"; title("Drag polar at Re=$(self.pyPolar.Re)"); end;
-            plot( cdpolar ? cl : alpha, cd, style, label=label; polar_optargs...)
+            if title_str=="automatic"; ax.title.set_text("Drag polar at Re=$(self.pyPolar.Re)"); end;
+            ax.plot( cdpolar ? cl : alpha, cd, style, label=label; polar_optargs...)
             if cdpolar
-              xlabel(L"C_l")
+              ax.set_xlabel(L"C_l")
             else
-              xlabel(L"Angle of attack $\alpha (^\circ)$")
+              ax.set_xlabel(L"Angle of attack $\alpha (^\circ)$")
             end
-            ylabel(L"C_d")
-            grid(true, color="0.8", linestyle="--")
+            ax.set_ylabel(L"C_d")
+            ax.grid(true, color="0.8", linestyle="--")
 
         elseif this_plot=="Cm"
-            if title_str=="automatic"; title("Moment curve at Re=$(self.pyPolar.Re)"); end;
-            plot(alpha, cm, style, label=label; polar_optargs...)
-            xlabel(L"Angle of attack $\alpha (^\circ)$")
-            ylabel(L"C_m")
-            grid(true, color="0.8", linestyle="--")
+            if title_str=="automatic"; ax.title.set_text("Moment curve at Re=$(self.pyPolar.Re)"); end;
+            ax.plot(alpha, cm, style, label=label; polar_optargs...)
+            ax.set_xlabel(L"Angle of attack $\alpha (^\circ)$")
+            ax.set_ylabel(L"C_m")
+            ax.grid(true, color="0.8", linestyle="--")
         end
 
-        if pi==length(to_plot); legend(; legend_optargs...); end;
+        if pi==length(to_plot); ax.legend(; legend_optargs...); end;
     end
 end
 
