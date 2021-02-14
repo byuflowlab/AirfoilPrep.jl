@@ -354,34 +354,37 @@ function injective(polar::Polar; start_i::Int64=2)
     alpha, cl = get_cl(polar)
     _, cd = get_cd(polar)
     _, cm = get_cm(polar)
+    na = length(alpha)
 
     # New polar data
-    out_a, out_cl, out_cd, out_cm = Float64[], Float64[], Float64[], Float64[]
-
+    out_a, out_cl, out_cd, out_cm = zeros(na), zeros(na), zeros(na), zeros(na)
     # Iterates over data averaging repeated angles
-    ave_val = Dict("a"=>0.0, "cl"=>0.0, "cd"=>0.0, "cm"=>0.0, "cum_i"=>0)
+    ave_a, ave_cl, ave_cd, ave_cm, cum_i = 0.0, 0.0, 0.0, 0.0, 0
+    count = 0
     for (i,this_a) in enumerate(alpha)
 
         # Accumulates repeated values
-        ave_val["a"] += this_a
-        ave_val["cl"] += cl[i]
-        ave_val["cd"] += cd[i]
-        ave_val["cm"] += cm[i]
-        ave_val["cum_i"] += 1
+        ave_a += this_a
+        ave_cl += cl[i]
+        ave_cd += cd[i]
+        ave_cm += cm[i]
+        cum_i += 1
 
         # Averages repeated values
         next_a = i!=size(alpha)[1] ? alpha[i+1] : nothing
         if i<start_i || this_a!=next_a
-            push!(out_a, ave_val["a"]/ave_val["cum_i"])
-            push!(out_cl, ave_val["cl"]/ave_val["cum_i"])
-            push!(out_cd, ave_val["cd"]/ave_val["cum_i"])
-            push!(out_cm, ave_val["cm"]/ave_val["cum_i"])
-            ave_val = Dict("a"=>0.0, "cl"=>0.0, "cd"=>0.0, "cm"=>0.0, "cum_i"=>0)
+            count += 1
+            out_a[count] = ave_a/cum_i
+            out_cl[count] = ave_cl/cum_i
+            out_cd[count] = ave_cd/cum_i
+            out_cm[count] = ave_cm/cum_i
+            ave_a, ave_cl, ave_cd, ave_cm, cum_i = 0.0, 0.0, 0.0, 0.0, 0
         end
     end
 
     # Injective polar
-    new_polar = Polar(get_Re(polar), out_a, out_cl, out_cd, out_cm;
+    new_polar = Polar(get_Re(polar), out_a[1:count], out_cl[1:count],
+                                    out_cd[1:count], out_cm[1:count];
                                           _get_nonpypolar_args(polar)...)
 
     return new_polar
