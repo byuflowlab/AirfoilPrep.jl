@@ -294,7 +294,7 @@ function plot(self::Polar; geometry::Bool=true, label="", style=".-",
             ax.grid(true, color="0.8", linestyle="--")
         end
 
-        if pi==length(to_plot); ax.legend(; legend_optargs...); end;
+        if pi==length(to_plot) && legend_optargs!=nothing; ax.legend(; legend_optargs...); end;
     end
 end
 
