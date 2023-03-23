@@ -1,7 +1,7 @@
 name = "AirfoilPrep"
 uuid = "008c61af-3522-4e14-81c5-9301d18a9f66"
 authors = ["FLOW Lab <aning@byu.edu>"]
-version = "2.1.1"
+version = "2.1.2"
 
 [deps]
 PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
