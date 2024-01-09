@@ -137,7 +137,7 @@ class Polar(object):
 
 
         """
-        if all(elem == self.cd[0] for elem in self.cd):
+        if all(elem == self.cd[0] for elem in self.cd) or tsr == 0.0:
             return type(self)(self.Re, self.alpha, self.cl, self.cd, self.cm)
         else:
             # rename and convert units for convenience
